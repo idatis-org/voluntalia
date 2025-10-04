@@ -3,14 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateUser } from "@/hooks/user/useCreateUser";
 import { CreateUserDTO } from "@/types/user";
-
 
 interface AddVolunteerModalProps {
   open: boolean;
@@ -18,32 +30,40 @@ interface AddVolunteerModalProps {
   onAdd?: (volunteer: unknown) => void;
 }
 
-const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChange, onAdd }) => {
+const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
+  open,
+  onOpenChange,
+  onAdd,
+}) => {
   const { toast } = useToast();
   //const [isLoading, setIsLoading] = useState(false);
   const { mutate, isPending, error } = useCreateUser();
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
-  
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
+    country: "",
+    city: "",
     address: "",
     emergency_contact: "",
     emergency_phone: "",
     availability: "",
-    motivation: ""
+    motivation: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload : CreateUserDTO = {
+    const payload: CreateUserDTO = {
       name: `${formData.firstName} ${formData.lastName}`,
       email: formData.email,
       password: "aaa111",
+      country: formData.country,
+      city: formData.city,
     };
 
     mutate(payload, {
@@ -75,7 +95,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
   //   try {
   //     // Simulate API call
   //     await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
   //     const newVolunteer = {
   //       ...formData,
   //       name: `${formData.firstName} ${formData.lastName}`,
@@ -113,7 +133,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setSkills(skills.filter(skill => skill !== skillToRemove));
+    setSkills(skills.filter((skill) => skill !== skillToRemove));
   };
 
   const resetForm = () => {
@@ -122,11 +142,13 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
       lastName: "",
       email: "",
       phone: "",
+      country: "",
+      city: "",
       address: "",
       emergency_contact: "",
       emergency_phone: "",
       availability: "",
-      motivation: ""
+      motivation: "",
     });
     setSkills([]);
     setNewSkill("");
@@ -138,7 +160,8 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
         <DialogHeader>
           <DialogTitle>Add New Volunteer</DialogTitle>
           <DialogDescription>
-            Add a new volunteer to the VoluntALIA community. Fill out their information below.
+            Add a new volunteer to the VoluntALIA community. Fill out their
+            information below.
           </DialogDescription>
         </DialogHeader>
 
@@ -152,7 +175,9 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
                 <Input
                   id="firstName"
                   value={formData.firstName}
-                  onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, firstName: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -161,12 +186,14 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
                 <Input
                   id="lastName"
                   value={formData.lastName}
-                  onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
                   required
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address *</Label>
@@ -174,7 +201,9 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -183,19 +212,38 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
                 <Input
                   id="phone"
                   value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="country">Country *</Label>
+                <Input
+                  id="country"
+                  type="text"
+                  value={formData.country}
+                  onChange={(e) =>
+                    setFormData({ ...formData, country: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City *</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) =>
+                    setFormData({ ...formData, city: e.target.value })
+                  }
+                  required
+                />
+              </div>
             </div>
           </div>
 
@@ -204,11 +252,18 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
             <h3 className="text-lg font-semibold">Emergency Contact</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="emergency_contact">Emergency Contact Name</Label>
+                <Label htmlFor="emergency_contact">
+                  Emergency Contact Name
+                </Label>
                 <Input
                   id="emergency_contact"
                   value={formData.emergency_contact}
-                  onChange={(e) => setFormData({...formData, emergency_contact: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      emergency_contact: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -216,7 +271,12 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
                 <Input
                   id="emergency_phone"
                   value={formData.emergency_phone}
-                  onChange={(e) => setFormData({...formData, emergency_phone: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      emergency_phone: e.target.value,
+                    })
+                  }
                 />
               </div>
             </div>
@@ -232,7 +292,9 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
                   value={newSkill}
                   onChange={(e) => setNewSkill(e.target.value)}
                   placeholder="Enter a skill..."
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" && (e.preventDefault(), addSkill())
+                  }
                 />
                 <Button type="button" onClick={addSkill} variant="outline">
                   <Plus className="h-4 w-4" />
@@ -241,7 +303,11 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
               {skills.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="flex items-center space-x-1">
+                    <Badge
+                      key={skill}
+                      variant="secondary"
+                      className="flex items-center space-x-1"
+                    >
                       <span>{skill}</span>
                       <button
                         type="button"
@@ -262,7 +328,12 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
             <h3 className="text-lg font-semibold">Additional Information</h3>
             <div className="space-y-2">
               <Label htmlFor="availability">Availability</Label>
-              <Select value={formData.availability} onValueChange={(value) => setFormData({...formData, availability: value})}>
+              <Select
+                value={formData.availability}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, availability: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select availability" />
                 </SelectTrigger>
@@ -279,7 +350,9 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
               <Textarea
                 id="motivation"
                 value={formData.motivation}
-                onChange={(e) => setFormData({...formData, motivation: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, motivation: e.target.value })
+                }
                 placeholder="Tell us about your motivation to volunteer..."
                 rows={3}
               />
@@ -287,10 +360,18 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({ open, onOpenChang
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending} className="bg-gradient-primary">
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="bg-gradient-primary"
+            >
               {isPending ? "Adding..." : "Add Volunteer"}
             </Button>
           </DialogFooter>
