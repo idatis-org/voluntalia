@@ -23,6 +23,8 @@ import { X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateUser } from "@/hooks/user/useCreateUser";
 import { CreateUserDTO } from "@/types/user";
+import { useSkills } from "@/hooks/skill/useSkills";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddVolunteerModalProps {
   open: boolean;
@@ -36,10 +38,9 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
   onAdd,
 }) => {
   const { toast } = useToast();
-  //const [isLoading, setIsLoading] = useState(false);
   const { mutate, isPending, error } = useCreateUser();
-  const [skills, setSkills] = useState<string[]>([]);
-  const [newSkill, setNewSkill] = useState("");
+  const { data: allSkills = [] } = useSkills();
+  const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -88,52 +89,14 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
     });
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   //setIsLoading(true);
-
-  //   try {
-  //     // Simulate API call
-  //     await new Promise(resolve => setTimeout(resolve, 1500));
-
-  //     const newVolunteer = {
-  //       ...formData,
-  //       name: `${formData.firstName} ${formData.lastName}`,
-  //       skills,
-  //       id: Date.now(),
-  //       status: "active",
-  //       joinDate: new Date().toLocaleDateString(),
-  //       hours: 0,
-  //       events: 0
-  //     };
-
-  //     onAdd?.(newVolunteer);
-  //     toast({
-  //       title: "Volunteer Added Successfully",
-  //       description: `${newVolunteer.name} has been added to the volunteer database.`,
-  //     });
-  //     onOpenChange(false);
-  //     resetForm();
-  //   } catch (error) {
-  //     toast({
-  //       title: "Error",
-  //       description: "Failed to add volunteer. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  const addSkill = () => {
-    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      setSkills([...skills, newSkill.trim()]);
-      setNewSkill("");
+  const handleToggleSkill = (skillId: string) => {
+    const newSelected = new Set(selectedSkills);
+    if (newSelected.has(skillId)) {
+      newSelected.delete(skillId);
+    } else {
+      newSelected.add(skillId);
     }
-  };
-
-  const removeSkill = (skillToRemove: string) => {
-    setSkills(skills.filter((skill) => skill !== skillToRemove));
+    setSelectedSkills(newSelected);
   };
 
   const resetForm = () => {
@@ -150,8 +113,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
       availability: "",
       motivation: "",
     });
-    setSkills([]);
-    setNewSkill("");
+    setSelectedSkills(new Set());
   };
 
   return (
@@ -286,37 +248,38 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Skills & Interests</h3>
             <div className="space-y-2">
-              <Label>Add Skills</Label>
-              <div className="flex space-x-2">
-                <Input
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  placeholder="Enter a skill..."
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addSkill())
-                  }
-                />
-                <Button type="button" onClick={addSkill} variant="outline">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              {skills.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {skills.map((skill) => (
-                    <Badge
-                      key={skill}
-                      variant="secondary"
-                      className="flex items-center space-x-1"
-                    >
-                      <span>{skill}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeSkill(skill)}
-                        className="ml-1 text-muted-foreground hover:text-foreground"
+               <Label>Select Skills</Label>
+              {allSkills.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No skills available. Contact an administrator to add skills.
+                </p>
+              ) : (
+                <div className="max-h-48 overflow-y-auto space-y-2 border rounded-md p-3">
+                  {allSkills.map((skill) => (
+                    <div key={skill.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`skill-${skill.id}`}
+                        checked={selectedSkills.has(skill.id)}
+                        onCheckedChange={() => handleToggleSkill(skill.id)}
+                      />
+                      <label
+                        htmlFor={`skill-${skill.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
+                        {skill.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selectedSkills.size > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {allSkills
+                    .filter(s => selectedSkills.has(s.id))
+                    .map((skill) => (
+                      <Badge key={skill.id} variant="secondary">
+                        {skill.name}
+                      </Badge>
                   ))}
                 </div>
               )}

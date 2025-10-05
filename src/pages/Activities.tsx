@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,15 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, Award } from "lucide-react";
 import { PageLayout } from "@/components/common/PageLayout";
 import { StatsGrid } from "@/components/common/StatsGrid";
 import { SearchFilterBar } from "@/components/common/SearchFilterBar";
 import { FormModal } from "@/components/common/FormModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useActivitiesPage } from "@/hooks/pages/useActivitiesPage";
+import { ManageSkillsModal } from "@/components/modals/ManageSkillsModal";
 
 export default function Activities() {
+  const [skillsModalOpen, setSkillsModalOpen] = useState(false);
   const {
     // Data
     isLoading,
@@ -56,13 +59,23 @@ export default function Activities() {
         onSearchChange={searchAndFilter.setSearchTerm}
         searchPlaceholder="Search activities..."
         actions={
-          <Button 
-            onClick={() => createModal.openModal()}
-            className="shadow-soft"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Activity
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setSkillsModalOpen(true)}
+              className="shadow-soft"
+            >
+              <Award className="h-4 w-4 mr-2" />
+              Manage Skills
+            </Button>
+            <Button 
+              onClick={() => createModal.openModal()}
+              className="shadow-soft"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Activity
+            </Button>
+          </div>
         }
         className="mb-6"
       />
@@ -227,6 +240,13 @@ export default function Activities() {
         cancelText={confirmDialog.data?.cancelText}
         variant={confirmDialog.data?.variant}
       />
+      {/* Manage Skills Modal */}
+      {skillsModalOpen && (
+        <ManageSkillsModal
+          open={skillsModalOpen}
+          onOpenChange={setSkillsModalOpen}
+        />
+      )}
     </PageLayout>
   );
 }

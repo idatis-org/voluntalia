@@ -4,5 +4,6 @@ export const ENDPOINTS = {
   LOGIN: "/auth/login",
   ME: "/auth/me",
   REGISTER: "/auth/register",
-  WORKLOG: "/worklog"
+  WORKLOG: "/worklog",
+  SKILLS: "/skill",
 };
