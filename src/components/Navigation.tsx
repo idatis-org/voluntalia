@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Heart, Users, Calendar, Clock, FileText, Settings, Menu, LogOut, Bell, Activity } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ROUTE_PERMISSIONS } from "@/config/permissions";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,14 +14,14 @@ export const Navigation = () => {
   
 
   const navItems = [
-    { name: "Dashboard", href: "/", icon: Heart, roles: ['COORDINATOR', 'VOLUNTEER'] },
-    { name: "Volunteers", href: "/volunteers", icon: Users, roles: ['COORDINATOR'] },
-    { name: "Activities", href: "/activities", icon: Activity, roles: ['COORDINATOR'] },
+    { name: "Dashboard", href: "/", icon: Heart, roles: ROUTE_PERMISSIONS.DASHBOARD },
+    { name: "Volunteers", href: "/volunteers", icon: Users, roles: ROUTE_PERMISSIONS.VOLUNTEERS },
+    { name: "Activities", href: "/activities", icon: Activity, roles: ROUTE_PERMISSIONS.ACTIVITIES },
     // { name: "Events", href: "/events", icon: Calendar, roles: [] },
-    { name: "Hours", href: "/hours", icon: Clock, roles: ['COORDINATOR', 'VOLUNTEER'] },
-    { name: "Resources", href: "/resources", icon: FileText, roles: ['COORDINATOR'] },
-    { name: "Notifications", href: "/notifications", icon: Bell, roles: ['COORDINATOR'] },
-    // { name: "Settings", href: "/settings", icon: Settings, roles: ['COORDINATOR'] },
+    { name: "Hours", href: "/hours", icon: Clock, roles: ROUTE_PERMISSIONS.HOURS },
+    { name: "Resources", href: "/resources", icon: FileText, roles: ROUTE_PERMISSIONS.RESOURCES },
+    { name: "Notifications", href: "/notifications", icon: Bell, roles: ROUTE_PERMISSIONS.NOTIFICATIONS },
+    // { name: "Settings", href: "/settings", icon: Settings, roles: ROUTE_PERMISSIONS.SETTINGS },
   ];
 
   const allowedNavItems = navItems.filter(item => 
@@ -113,14 +114,14 @@ export const Navigation = () => {
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 bg-gradient-soft border-t border-border">
-            {navItems.map((item) => {
+            {allowedNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
               return (
                 <a
                   key={item.name}
                   href={item.href}
-                  className={`block px-3 py-2 rounded-md text-base font-medium flex items-center space-x-2 transition-smooth ${
+                  className={`px-3 py-2 rounded-md text-base font-medium flex items-center space-x-2 transition-smooth ${
                     isActive
                       ? "bg-gradient-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent"

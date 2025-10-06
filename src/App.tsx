@@ -18,6 +18,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import FAQWidget from "./components/FAQWidget";
+import { ROUTE_PERMISSIONS } from "./config/permissions";
 
 const queryClient = new QueryClient();
 
@@ -38,23 +39,37 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/profile" element={<Profile />} />
-                    {/* <Route path="/volunteers" element={<Volunteers />} /> */}
-                    {/* Rutas solo para administradores */}
-                    <Route path="/volunteers" element={ <Volunteers />
-                      // <ProtectedRoute allowedRoles={['COORDINATOR']}>
-                      //   <Volunteers />
-                      // </ProtectedRoute>
+                    {/* Rutas protegidas por rol */}
+                    <Route path="/volunteers" element={
+                      <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.VOLUNTEERS}>
+                        <Volunteers />
+                      </ProtectedRoute>
                     } />
                     <Route path="/activities" element={ 
-                      <ProtectedRoute allowedRoles={['COORDINATOR']}>
+                      <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.ACTIVITIES}>
                         <Activities />
                       </ProtectedRoute>
                     } />
-                    {/* <Route path="/events" element={<Events />} /> */}
-                    <Route path="/hours" element={<Hours />} />
-                    <Route path="/resources" element={<Resources />} />
-                    <Route path="/notifications" element={<Notifications />} />
-                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/hours" element={
+                      <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.HOURS}>
+                        <Hours />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/resources" element={
+                      <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.RESOURCES}>
+                        <Resources />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/notifications" element={
+                      <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.NOTIFICATIONS}>
+                        <Notifications />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/settings" element={
+                      <ProtectedRoute allowedRoles={ROUTE_PERMISSIONS.SETTINGS}>
+                        <Settings />
+                      </ProtectedRoute>
+                    } />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
