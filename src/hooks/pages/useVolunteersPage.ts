@@ -1,7 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useUsers } from '@/hooks/user/useUsers';
 import { useActivities } from '@/hooks/activity/useActivities';
-import { useAssignActivity, useUnassignActivity } from '@/hooks/activity/useAssignActivity';
+import {
+  useAssignActivity,
+  useUnassignActivity,
+} from '@/hooks/activity/useAssignActivity';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchAndFilter } from '@/hooks/common/useSearchAndFilter';
 import { useModal } from '@/hooks/common/useModal';
@@ -13,10 +16,10 @@ export const useVolunteersPage = () => {
   const { toast } = useToast();
   const [searchActivity, setSearchActivity] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [skillFilter, setSkillFilter] = useState("all");
-  const [hoursRange, setHoursRange] = useState("all");
-  const [eventsRange, setEventsRange] = useState("all");
-  const [joinDateFilter, setJoinDateFilter] = useState("all");
+  const [skillFilter, setSkillFilter] = useState('all');
+  const [hoursRange, setHoursRange] = useState('all');
+  const [eventsRange, setEventsRange] = useState('all');
+  const [joinDateFilter, setJoinDateFilter] = useState('all');
 
   // Data fetching
   const { data: users = [], isLoading, error } = useUsers();
@@ -48,25 +51,49 @@ export const useVolunteersPage = () => {
 
   // Further filter volunteers based on advanced filters
   const finalFilteredVolunteers = useMemo(() => {
-    return filteredVolunteers.filter(volunteer => {
-      const matchesStatus = filters.main === "all" || 
-                           (filters.main === "active" && volunteer.role !== "inactive") ||
-                           (filters.main === "inactive" && volunteer.role === "inactive");
-      
-      const matchesSkill = skillFilter === "all" || 
-                          (volunteer.role && volunteer.role.toLowerCase() === skillFilter.toLowerCase());
-      
+    return filteredVolunteers.filter((volunteer) => {
+      const matchesStatus =
+        filters.main === 'all' ||
+        (filters.main === 'active' && volunteer.role !== 'inactive') ||
+        (filters.main === 'inactive' && volunteer.role === 'inactive');
+
+      const matchesSkill =
+        skillFilter === 'all' ||
+        (volunteer.role &&
+          volunteer.role.toLowerCase() === skillFilter.toLowerCase());
+
       // Add more filter logic as needed for hoursRange, eventsRange, joinDateFilter
-      
-      return matchesStatus && matchesSkill;
+      const matchesHours =
+        hoursRange === 'all' ||
+        (hoursRange === '0-50' && (volunteer.totalWorkHours || 0) <= 50) ||
+        (hoursRange === '51-100' &&
+          (volunteer.totalWorkHours || 0) > 50 &&
+          (volunteer.totalWorkHours || 0) <= 100) ||
+        (hoursRange === '101-200' &&
+          (volunteer.totalWorkHours || 0) > 100 &&
+          (volunteer.totalWorkHours || 0) <= 200) ||
+        (hoursRange === '200+' && (volunteer.totalWorkHours || 0) > 200);
+
+      // return matchesStatus && matchesSkill && matchesHours && matchesEvents && matchesJoinDate;
+      return matchesStatus && matchesSkill && matchesHours;
     });
-  }, [filteredVolunteers, filters.main, skillFilter, hoursRange, eventsRange, joinDateFilter]);
+  }, [
+    filteredVolunteers,
+    filters.main,
+    skillFilter,
+    hoursRange,
+    eventsRange,
+    joinDateFilter,
+  ]);
 
   // Recalculate pagination for final filtered data
   const finalTotalItems = finalFilteredVolunteers.length;
   const finalTotalPages = Math.ceil(finalTotalItems / 6);
   const startIndex = (currentPage - 1) * 6;
-  const finalPaginatedVolunteers = finalFilteredVolunteers.slice(startIndex, startIndex + 6);
+  const finalPaginatedVolunteers = finalFilteredVolunteers.slice(
+    startIndex,
+    startIndex + 6
+  );
 
   // Modal management
   const addVolunteerModal = useModal();
@@ -80,29 +107,30 @@ export const useVolunteersPage = () => {
       label: 'Total Volunteers',
       icon: Users,
       calculate: (data: User[]) => data.length,
-      color: 'text-primary'
+      color: 'text-primary',
     },
     {
       key: 'active',
       label: 'Active Volunteers',
       icon: Award,
-      calculate: (data: User[]) => data.filter(u => u.role !== 'inactive').length,
-      color: 'text-soft-green'
+      calculate: (data: User[]) =>
+        data.filter((u) => u.role !== 'inactive').length,
+      color: 'text-soft-green',
     },
     {
       key: 'hours',
       label: 'Hours This Month',
       icon: Clock,
       calculate: () => '3,492', // This would come from actual hours data
-      color: 'text-warm-accent'
+      color: 'text-warm-accent',
     },
     {
       key: 'new',
       label: 'New This Month',
       icon: Users,
       calculate: () => '91', // This would come from actual new users data
-      color: 'text-destructive'
-    }
+      color: 'text-destructive',
+    },
   ];
 
   const { stats } = useStats(users, statsConfig);
@@ -110,12 +138,16 @@ export const useVolunteersPage = () => {
   // Handlers
   const handleDeleteVolunteer = (volunteerId: string) => {
     toast({
-      title: "Volunteer Removed",
-      description: "The volunteer has been successfully removed from the database.",
+      title: 'Volunteer Removed',
+      description:
+        'The volunteer has been successfully removed from the database.',
     });
   };
 
-  const handleContactVolunteer = (volunteer: User, method: 'email' | 'phone') => {
+  const handleContactVolunteer = (
+    volunteer: User,
+    method: 'email' | 'phone'
+  ) => {
     if (method === 'email') {
       window.location.href = `mailto:${volunteer.email}`;
     } else {
@@ -134,97 +166,103 @@ export const useVolunteersPage = () => {
 
   const handleAssignActivity = async (userId: string, activityId: string) => {
     try {
-      const user = users.find(u => u.id === userId);
+      const user = users.find((u) => u.id === userId);
       if (!user) return;
 
-      const activity = activities.find(a => a.id === activityId);
+      const activity = activities.find((a) => a.id === activityId);
       if (!activity) return;
 
       // Check if activity is already assigned
-      const isAlreadyAssigned = user.volunteerActivities?.some(a => a.id === activityId);
+      const isAlreadyAssigned = user.volunteerActivities?.some(
+        (a) => a.id === activityId
+      );
       if (isAlreadyAssigned) {
         toast({
-          title: "Activity already assigned",
-          description: "This activity is already assigned to the volunteer.",
-          variant: "destructive",
+          title: 'Activity already assigned',
+          description: 'This activity is already assigned to the volunteer.',
+          variant: 'destructive',
         });
         return;
       }
 
       await assignActivityMutation.mutateAsync({
         activityId: activityId,
-        userId: userId
+        userId: userId,
       });
 
       toast({
-        title: "Activity assigned",
+        title: 'Activity assigned',
         description: `${activity.title} has been assigned to ${user.name}.`,
       });
 
       // Update modal data to reflect the change
       const updatedUser = {
         ...user,
-        volunteerActivities: [...(user.volunteerActivities || []), activity]
+        volunteerActivities: [...(user.volunteerActivities || []), activity],
       };
       activityModal.openModal(updatedUser);
       setSearchActivity('');
     } catch (error) {
       toast({
-        title: "Error assigning activity",
-        description: "There was an error assigning the activity. Please try again.",
-        variant: "destructive",
+        title: 'Error assigning activity',
+        description:
+          'There was an error assigning the activity. Please try again.',
+        variant: 'destructive',
       });
     }
   };
 
   const handleRemoveActivity = async (userId: string, activityId: string) => {
     try {
-      const user = users.find(u => u.id === userId);
+      const user = users.find((u) => u.id === userId);
       if (!user) return;
 
       await unassignActivityMutation.mutateAsync({
         activityId: activityId,
-        userId: userId
+        userId: userId,
       });
 
       toast({
-        title: "Activity removed",
-        description: "The activity has been removed from the volunteer.",
+        title: 'Activity removed',
+        description: 'The activity has been removed from the volunteer.',
       });
 
       // Update modal data to reflect the change
       const updatedUser = {
         ...user,
-        volunteerActivities: user.volunteerActivities?.filter(a => a.id !== activityId) || []
+        volunteerActivities:
+          user.volunteerActivities?.filter((a) => a.id !== activityId) || [],
       };
       activityModal.openModal(updatedUser);
     } catch (error) {
       toast({
-        title: "Error removing activity",
-        description: "There was an error removing the activity. Please try again.",
-        variant: "destructive",
+        title: 'Error removing activity',
+        description:
+          'There was an error removing the activity. Please try again.',
+        variant: 'destructive',
       });
     }
   };
 
   const clearAllFilters = () => {
-    setMainFilter("all");
-    setSkillFilter("all");
-    setHoursRange("all");
-    setEventsRange("all");
-    setJoinDateFilter("all");
+    setMainFilter('all');
+    setSkillFilter('all');
+    setHoursRange('all');
+    setEventsRange('all');
+    setJoinDateFilter('all');
     resetSearch();
   };
 
   const hasActiveFilters = () => {
-    return filters.main !== "all" || 
-           skillFilter !== "all" || 
-           hoursRange !== "all" || 
-           eventsRange !== "all" || 
-           joinDateFilter !== "all" || 
-           searchTerm !== "";
+    return (
+      filters.main !== 'all' ||
+      skillFilter !== 'all' ||
+      hoursRange !== 'all' ||
+      eventsRange !== 'all' ||
+      joinDateFilter !== 'all' ||
+      searchTerm !== ''
+    );
   };
-
   return {
     // Data
     users,
@@ -232,14 +270,14 @@ export const useVolunteersPage = () => {
     isLoading,
     error,
     stats,
-    
+
     // Filtered and paginated data
     volunteers: finalPaginatedVolunteers,
     totalItems: finalTotalItems,
     totalPages: finalTotalPages,
     currentPage,
     startIndex,
-    
+
     // Search and filters
     searchTerm,
     setSearchTerm,
@@ -257,19 +295,19 @@ export const useVolunteersPage = () => {
     setShowAdvancedFilters,
     clearAllFilters,
     hasActiveFilters,
-    
+
     // Activity search
     searchActivity,
     setSearchActivity,
-    
+
     // Pagination
     setCurrentPage,
-    
+
     // Modals
     addVolunteerModal,
     viewProfileModal,
     activityModal,
-    
+
     // Handlers
     handleDeleteVolunteer,
     handleContactVolunteer,
