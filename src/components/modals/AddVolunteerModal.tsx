@@ -24,7 +24,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useCreateUser } from "@/hooks/user/useCreateUser";
 import { CreateUserDTO } from "@/types/user";
 import { useSkills } from "@/hooks/skill/useSkills";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddVolunteerModalProps {
   open: boolean;
@@ -41,6 +40,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
   const { mutate, isPending, error } = useCreateUser();
   const { data: allSkills = [] } = useSkills();
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
+  const [skillSearch, setSkillSearch] = useState("");
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -65,8 +65,10 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
       password: "aaa111",
       country: formData.country,
       city: formData.city,
+      skills: selectedSkills.size > 0 ? Array.from(selectedSkills) : [],
     };
 
+    console.log(payload);
     mutate(payload, {
       onSuccess: (newVolunteer) => {
         onAdd?.(newVolunteer);
@@ -89,15 +91,24 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
     });
   };
 
-  const handleToggleSkill = (skillId: string) => {
+  const handleAddSkill = (skillId: string) => {
     const newSelected = new Set(selectedSkills);
-    if (newSelected.has(skillId)) {
-      newSelected.delete(skillId);
-    } else {
-      newSelected.add(skillId);
-    }
+    newSelected.add(skillId);
+    setSelectedSkills(newSelected);
+    setSkillSearch("");
+    console.log(selectedSkills);
+  };
+
+  const handleRemoveSkill = (skillId: string) => {
+    const newSelected = new Set(selectedSkills);
+    newSelected.delete(skillId);
     setSelectedSkills(newSelected);
   };
+
+  const filteredSkills = allSkills.filter(skill => 
+      !selectedSkills.has(skill.id) && 
+      skill.name.toLowerCase().includes(skillSearch.toLowerCase())
+  ).slice(0, 5);
 
   const resetForm = () => {
     setFormData({
@@ -114,6 +125,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
       motivation: "",
     });
     setSelectedSkills(new Set());
+    setSkillSearch("");
   };
 
   return (
@@ -248,37 +260,43 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Skills & Interests</h3>
             <div className="space-y-2">
-               <Label>Select Skills</Label>
-              {allSkills.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No skills available. Contact an administrator to add skills.
-                </p>
-              ) : (
-                <div className="max-h-48 overflow-y-auto space-y-2 border rounded-md p-3">
-                  {allSkills.map((skill) => (
-                    <div key={skill.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`skill-${skill.id}`}
-                        checked={selectedSkills.has(skill.id)}
-                        onCheckedChange={() => handleToggleSkill(skill.id)}
-                      />
-                      <label
-                        htmlFor={`skill-${skill.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              <Label htmlFor="skillSearch">Search Skills</Label>
+              <div className="relative">
+                <Input
+                  id="skillSearch"
+                  value={skillSearch}
+                  onChange={(e) => setSkillSearch(e.target.value)}
+                  placeholder="Type to search skills..."
+                />
+                {skillSearch && filteredSkills.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {filteredSkills.map((skill) => (
+                      <button
+                        key={skill.id}
+                        type="button"
+                        onClick={() => handleAddSkill(skill.id)}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
                       >
                         {skill.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               {selectedSkills.size > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {allSkills
                     .filter(s => selectedSkills.has(s.id))
                     .map((skill) => (
-                      <Badge key={skill.id} variant="secondary">
+                      <Badge key={skill.id} variant="secondary" className="flex items-center gap-1">
                         {skill.name}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSkill(skill.id)}
+                          className="ml-1 hover:bg-destructive/20 rounded-full"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                   ))}
                 </div>

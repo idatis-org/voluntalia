@@ -17,6 +17,7 @@ export interface CreateUserDTO {
   city: string;
   volunteerActivities?: null;
   role?: string;
+  skills?: string[];
 }
 
 export interface UserResponse {
