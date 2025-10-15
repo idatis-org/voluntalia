@@ -3,7 +3,6 @@ import { useCreateActivity } from '@/hooks/activity/useCreateActivity';
 import { useUpdateActivity } from '@/hooks/activity/useUpdateActivity';
 import { useDeleteActivity } from '@/hooks/activity/useDeleteActivity';
 import { useSearchAndFilter } from '@/hooks/common/useSearchAndFilter';
-import { useGetVolunteersByActivity } from '@/hooks/activity/useGetVolunteersByActivity';
 import { useModal } from '@/hooks/common/useModal';
 import { useFormData } from '@/hooks/common/useFormData';
 import { useStats } from '@/hooks/common/useStats';
