@@ -1,19 +1,26 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Loader2, Award } from "lucide-react";
-import { PageLayout } from "@/components/common/PageLayout";
-import { StatsGrid } from "@/components/common/StatsGrid";
-import { SearchFilterBar } from "@/components/common/SearchFilterBar";
-import { FormModal } from "@/components/common/FormModal";
-import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { useActivitiesPage } from "@/hooks/pages/useActivitiesPage";
-import { ManageSkillsModal } from "@/components/modals/ManageSkillsModal";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Edit, Trash2, Loader2, Award } from 'lucide-react';
+import { PageLayout } from '@/components/common/PageLayout';
+import { StatsGrid } from '@/components/common/StatsGrid';
+import { SearchFilterBar } from '@/components/common/SearchFilterBar';
+import { FormModal } from '@/components/common/FormModal';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { useActivitiesPage } from '@/hooks/pages/useActivitiesPage';
+import { ManageSkillsModal } from '@/components/modals/ManageSkillsModal';
 
 export default function Activities() {
   const [skillsModalOpen, setSkillsModalOpen] = useState(false);
@@ -21,33 +28,35 @@ export default function Activities() {
     // Data
     isLoading,
     stats,
-    
+
     // Search and filter
     searchAndFilter,
-    
+
     // Modals
     createModal,
     editModal,
     confirmDialog,
-    
+    showVolunteersModal,
+
     // Form
     form,
-    
+
     // Actions
     handleCreate,
     handleEdit,
     handleUpdate,
     handleDelete,
     handleModalClose,
-    
+    handleShowVolunteers,
+
     // Loading states
     isCreating,
-    isUpdating
+    isUpdating,
   } = useActivitiesPage();
 
   return (
-    <PageLayout 
-      title="Activities Management" 
+    <PageLayout
+      title="Activities Management"
       description="Manage volunteer activities and tasks"
     >
       {/* Stats */}
@@ -60,7 +69,7 @@ export default function Activities() {
         searchPlaceholder="Search activities..."
         actions={
           <div className="flex gap-2">
-            <Button 
+            <Button
               variant="outline"
               onClick={() => setSkillsModalOpen(true)}
               className="shadow-soft"
@@ -68,7 +77,7 @@ export default function Activities() {
               <Award className="h-4 w-4 mr-2" />
               Manage Skills
             </Button>
-            <Button 
+            <Button
               onClick={() => createModal.openModal()}
               className="shadow-soft"
             >
@@ -93,7 +102,9 @@ export default function Activities() {
           ) : searchAndFilter.filteredData.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
-                {searchAndFilter.searchTerm ? "No activities found matching your search." : "No activities available."}
+                {searchAndFilter.searchTerm
+                  ? 'No activities found matching your search.'
+                  : 'No activities available.'}
               </p>
             </div>
           ) : (
@@ -102,6 +113,7 @@ export default function Activities() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead>Volunteers</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -109,18 +121,29 @@ export default function Activities() {
               <TableBody>
                 {searchAndFilter.filteredData.map((activity) => (
                   <TableRow key={activity.id}>
-                    <TableCell className="font-medium">{activity.title}</TableCell>
+                    <TableCell className="font-medium">
+                      {activity.title}
+                    </TableCell>
                     <TableCell>
                       {activity.description ? (
                         <span className="text-sm text-muted-foreground">
-                          {activity.description.length > 50 
-                            ? `${activity.description.substring(0, 50)}...` 
-                            : activity.description
-                          }
+                          {activity.description.length > 50
+                            ? `${activity.description.substring(0, 50)}...`
+                            : activity.description}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground italic">No description</span>
+                        <span className="text-xs text-muted-foreground italic">
+                          No description
+                        </span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="default"
+                        onClick={() => handleShowVolunteers(activity)}
+                      >
+                        {activity.total_volunteers}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">Active</Badge>
@@ -174,7 +197,9 @@ export default function Activities() {
               placeholder="Enter activity name"
             />
             {form.errors.name && (
-              <p className="text-sm text-destructive mt-1">{form.errors.name}</p>
+              <p className="text-sm text-destructive mt-1">
+                {form.errors.name}
+              </p>
             )}
           </div>
           <div>
@@ -212,7 +237,9 @@ export default function Activities() {
               placeholder="Enter activity name"
             />
             {form.errors.name && (
-              <p className="text-sm text-destructive mt-1">{form.errors.name}</p>
+              <p className="text-sm text-destructive mt-1">
+                {form.errors.name}
+              </p>
             )}
           </div>
           <div>
@@ -228,14 +255,56 @@ export default function Activities() {
         </div>
       </FormModal>
 
+      {/* Show Volunteers Modal */}
+      <FormModal
+        onSubmit={() => {
+          showVolunteersModal.closeModal();
+          handleModalClose();
+        }}
+        isOpen={showVolunteersModal.isOpen}
+        onClose={() => {
+          showVolunteersModal.closeModal();
+          handleModalClose();
+        }}
+        title={`VOLUNTEERS FOR ${showVolunteersModal.data?.title}`}
+        submitText="Close"
+      >
+        <div className="space-y-4">
+          <div>
+            <div className="my-6 max-w-md">
+              <div className="max-h-60 overflow-y-auto">
+                {showVolunteersModal.data?.volunteers.map((volunteer) => (
+                  <div
+                    key={volunteer.id}
+                    className="py-1 grid grid-cols-2 px-2 border-b last:border-0 hover:bg-accent/10"
+                  >
+                    <span className="text-sm text-muted-foreground">
+                      {volunteer.name}
+                    </span>
+                    <Badge
+                      variant="default"
+                      className="justify-self-end cursor-pointer"
+                    >
+                      <span className="text-xs text-white font-bold">
+                        {volunteer.email}
+                      </span>
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </FormModal>
+
       {/* Confirm Delete Dialog */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={confirmDialog.hideDialog}
         onConfirm={confirmDialog.handleConfirm}
         isLoading={confirmDialog.isConfirming}
-        title={confirmDialog.data?.title || ""}
-        description={confirmDialog.data?.description || ""}
+        title={confirmDialog.data?.title || ''}
+        description={confirmDialog.data?.description || ''}
         confirmText={confirmDialog.data?.confirmText}
         cancelText={confirmDialog.data?.cancelText}
         variant={confirmDialog.data?.variant}
