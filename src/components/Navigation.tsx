@@ -4,7 +4,7 @@ import { Heart, Users, Calendar, Clock, FileText, Settings, Menu, LogOut, Bell, 
 import { useState, useMemo, useEffect } from "react";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
-import { ROUTE_PERMISSIONS } from "@/config/permissions";
+import { ROUTE_PERMISSIONS, isVolunteer, isCoordinator } from "@/config/permissions";
 import { canAccessRoute } from "@/lib/permissions";
 
 export const Navigation = () => {
@@ -84,21 +84,24 @@ export const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-10 flex items-baseline space-x-4 md:space-x-2 lg:space-x-4">
               {allowedNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <NavLink
                     key={item.name}
                     to={item.href}
-                    className={({ isActive }) => `px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-2 transition-smooth ${
+                    className={({ isActive }) => `px-2 md:px-3 py-2 rounded-md text-sm font-medium flex items-center md:space-x-2 transition-smooth ${
                       isActive
                         ? "bg-gradient-primary text-primary-foreground shadow-soft"
                         : "text-muted-foreground hover:text-foreground hover:bg-accent"
                     }`}
+                    aria-label={item.name}
+                    title={item.name}
                   >
                     <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
+                    {/* label: hidden at md (compact), visible according to role: VOLUNTEER=lg, COORDINATOR=xl, default=lg */}
+                    <span className={`hidden ${isVolunteer(user?.role) ? 'lg:inline' : 'xl:inline'}`}>{item.name}</span>
                   </NavLink>
                 );
               })}
@@ -114,7 +117,8 @@ export const Navigation = () => {
               onClick={handleProfileClick}
             >
               <Users className="h-4 w-4 mr-2" />
-              Profile
+              {/* VOLUNTEER: visible at lg, COORDINATOR: visible at xl, others: visible at lg */}
+              <span className={`hidden ${isVolunteer(user?.role) ? 'lg:inline' :  'xl:inline'}`}>Profile</span>
             </Button>
             <Button 
               variant="ghost" 
@@ -123,7 +127,7 @@ export const Navigation = () => {
               className="text-red-600 hover:text-red-700"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              <span className="hidden lg:inline">Logout</span>
             </Button>
           </div>
 
@@ -202,6 +206,8 @@ export const Navigation = () => {
                   className={({ isActive }) => `w-full flex items-center px-3 py-3 rounded-md text-base font-medium justify-start space-x-3 transition-smooth ${
                     isActive ? "bg-gradient-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   }`}
+                  aria-label="Profile"
+                  title="Profile"
                 >
                   <Users className="h-5 w-5 mr-2" />
                   <span>Profile</span>
@@ -212,6 +218,8 @@ export const Navigation = () => {
                     setIsOpen(false);
                     openLogoutConfirm();
                   }}
+                  aria-label="Logout"
+                  title="Logout"
                 >
                   <LogOut className="h-5 w-5 mr-2" />
                   <span>Logout</span>
