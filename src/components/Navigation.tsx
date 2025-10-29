@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Heart, Users, Calendar, Clock, FileText, Settings, Menu, LogOut, Bell, Activity } from "lucide-react";
+import { Heart, Users, Clock, FileText, Menu, LogOut, Bell, Activity } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
-import { ROUTE_PERMISSIONS, isVolunteer, isCoordinator } from "@/config/permissions";
+import { ROUTE_PERMISSIONS, isVolunteer } from "@/config/permissions";
 import { canAccessRoute } from "@/lib/permissions";
 
 export const Navigation = () => {
