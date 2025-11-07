@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Trash2, Mail, Phone, Activity } from "lucide-react";
 import { User } from "@/types/user";
+import formatDate from "@/lib/formatDate";
 
 interface VolunteerCardProps {
   volunteer: User;
@@ -71,7 +72,7 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
         <div className="space-y-4">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Joined:</span>
-            <span className="font-medium">{new Date(volunteer.createdAt).toLocaleDateString()}</span>
+            <span className="font-medium">{formatDate(volunteer.createdAt)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Role:</span>
