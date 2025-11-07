@@ -14,10 +14,10 @@ type CreateWorkLog = {
 export const getWorkLogsByUser = async (): Promise<WorkLog[]> => {
   const response = await api.get(`${ENDPOINTS.WORKLOG}/me`);
   const raw = response.data?.worklog ?? [];
-  const normalized = camelizeKeys<any[]>(raw).map((w) => ({
+  const normalized = camelizeKeys<WorkLog[]>(raw).map((w) => ({
     ...w,
-    weekStart: w.weekStart ?? (w as any).week_start,
-    activityTitle: w.activityTitle ?? (w as any).activity_title,
+    weekStart: w.weekStart ?? ((w as unknown as Record<string, unknown>)['week_start'] as string | undefined),
+    activityTitle: w.activityTitle ?? ((w as unknown as Record<string, unknown>)['activity_title'] as string | undefined),
   }));
   return normalized as WorkLog[];
 };
@@ -27,10 +27,10 @@ export const createWorkLog = async (workLogData: CreateWorkLogDTO): Promise<Work
   const payload = snakeifyKeys(workLogData);
   const response = await api.post(`${ENDPOINTS.WORKLOG}/create`, payload);
   const raw = response.data?.worklog ?? response.data;
-  const created = camelizeKeys<any>(raw);
-  created.weekStart = created.weekStart ?? (raw as any).week_start;
-  created.activityTitle = created.activityTitle ?? (raw as any).activity_title;
-  return created as WorkLog;
+  const created = camelizeKeys<WorkLog>(raw);
+  created.weekStart = created.weekStart ?? ((raw as Record<string, unknown>)['week_start'] as string | undefined);
+  created.activityTitle = created.activityTitle ?? ((raw as Record<string, unknown>)['activity_title'] as string | undefined);
+  return created;
 };
 
 export const deleteWorklog = async (id: string): Promise<void> => {
@@ -41,8 +41,8 @@ export const updateWorklog = async (id: string, worklogData: Partial<UpdateWorkL
   const payload = snakeifyKeys(worklogData);
   const response = await api.put(`${ENDPOINTS.WORKLOG}/${id}`, payload);
   const raw = response.data;
-  const updated = camelizeKeys<any>(raw);
-  updated.weekStart = updated.weekStart ?? (raw as any).week_start;
-  updated.activityTitle = updated.activityTitle ?? (raw as any).activity_title;
-  return updated as WorkLog;
+  const updated = camelizeKeys<WorkLog>(raw);
+  updated.weekStart = updated.weekStart ?? ((raw as Record<string, unknown>)['week_start'] as string | undefined);
+  updated.activityTitle = updated.activityTitle ?? ((raw as Record<string, unknown>)['activity_title'] as string | undefined);
+  return updated;
 };

@@ -7,30 +7,42 @@ function toSnake(s: string) {
   return s.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 }
 
-export function camelizeKeys<T>(obj: any): T {
-  if (obj == null) return obj;
-  if (Array.isArray(obj)) return obj.map((v) => camelizeKeys(v)) as any;
+/**
+ * Recursively convert object keys from snake_case to camelCase.
+ * Returns a strongly-typed T when possible. Uses `unknown` internally to
+ * avoid unsafe `any` usages that the project's eslint rules forbid.
+ */
+export function camelizeKeys<T = unknown>(obj: unknown): T {
+  if (obj == null) return obj as T;
+  if (Array.isArray(obj)) return obj.map((v) => camelizeKeys(v)) as unknown as T;
   if (typeof obj === "object") {
-    return Object.keys(obj).reduce((acc: any, key) => {
+    const entries = Object.entries(obj as Record<string, unknown>);
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of entries) {
       const newKey = toCamel(key);
-      acc[newKey] = camelizeKeys(obj[key]);
-      return acc;
-    }, {} as any) as T;
+      result[newKey] = camelizeKeys(value);
+    }
+    return result as T;
   }
   return obj as T;
 }
 
-export function snakeifyKeys(obj: any): any {
-  if (obj == null) return obj;
-  if (Array.isArray(obj)) return obj.map((v) => snakeifyKeys(v));
+/**
+ * Recursively convert object keys from camelCase to snake_case.
+ */
+export function snakeifyKeys<T = unknown>(obj: unknown): T {
+  if (obj == null) return obj as T;
+  if (Array.isArray(obj)) return obj.map((v) => snakeifyKeys(v)) as unknown as T;
   if (typeof obj === "object") {
-    return Object.keys(obj).reduce((acc: any, key) => {
+    const entries = Object.entries(obj as Record<string, unknown>);
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of entries) {
       const newKey = toSnake(key);
-      acc[newKey] = snakeifyKeys(obj[key]);
-      return acc;
-    }, {} as any);
+      result[newKey] = snakeifyKeys(value);
+    }
+    return result as T;
   }
-  return obj;
+  return obj as T;
 }
 
 export default {
