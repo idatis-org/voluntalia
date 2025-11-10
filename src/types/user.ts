@@ -1,4 +1,4 @@
-import { ActivityTask } from "./activity";
+import { ActivityTask } from './activity';
 
 export interface User {
   id: string;
@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role?: string;
   volunteerActivities?: ActivityTask[] | null;
+  totalWorkHours?: number | null;
   createdAt: string;
 }
 
