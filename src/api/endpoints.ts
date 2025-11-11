@@ -6,4 +6,6 @@ export const ENDPOINTS = {
   REGISTER: "/auth/register",
   WORKLOG: "/worklog",
   SKILLS: "/skill",
+  ACTIVITIES: "/activity",
+  RESOURCE: "/document",
 };

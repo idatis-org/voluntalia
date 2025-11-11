@@ -10,94 +10,100 @@ import { Search, Filter, FileText, Download, ExternalLink, BookOpen, Video, File
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import UploadResourceModal from "@/components/modals/UploadResourceModal";
 import { useToast } from "@/hooks/use-toast";
+import { useResourceCategory } from "@/hooks/resource/category/useResourceCategory";
+import { useResourceType } from "@/hooks/resource/resource-type/userResourceType";
+import { useResource } from "@/hooks/resource/useResource";
+import { Resource } from "@/types/resource";
 
 const Resources = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [resources, setResources] = useState([
+  const { data: categories = [] } = useResourceCategory();
+  const { data: types = [] } = useResourceType();
+  const { data: resources = [] } = useResource();
+  const [_, setResources] = useState<Resource[]>(resources);
+  // const [resources, setResources] = useState([
+  //   {
+  //     id: 1,
+  //     title: "Volunteer Handbook 2024",
+  //     description: "Complete guide for new volunteers including policies, procedures, and best practices",
+  //     type: "document",
+  //     category: "training",
+  //     format: "PDF",
+  //     size: "2.3 MB",
+  //     downloads: 1247,
+  //     uploadDate: "2024-01-15",
+  //     tags: ["handbook", "training", "policies"]
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Community Outreach Training Video",
+  //     description: "Learn effective community engagement techniques and communication strategies",
+  //     type: "video",
+  //     category: "training",
+  //     format: "MP4",
+  //     size: "45.7 MB",
+  //     downloads: 892,
+  //     uploadDate: "2024-03-10",
+  //     tags: ["video", "outreach", "communication"]
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "Event Planning Checklist",
+  //     description: "Step-by-step checklist for organizing successful volunteer events",
+  //     type: "document",
+  //     category: "tools",
+  //     format: "DOC",
+  //     size: "156 KB",
+  //     downloads: 654,
+  //     uploadDate: "2024-02-20",
+  //     tags: ["checklist", "events", "planning"]
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Safety Guidelines",
+  //     description: "Important safety protocols and emergency procedures for all volunteers",
+  //     type: "document",
+  //     category: "safety",
+  //     format: "PDF",
+  //     size: "1.1 MB",
+  //     downloads: 1156,
+  //     uploadDate: "2024-01-08",
+  //     tags: ["safety", "emergency", "protocols"]
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "First Aid Certification Course",
+  //     description: "Online first aid training course with certification upon completion",
+  //     type: "course",
+  //     category: "training",
+  //     format: "Online",
+  //     size: "N/A",
+  //     downloads: 423,
+  //     uploadDate: "2024-04-01",
+  //     tags: ["first aid", "certification", "course"]
+  //   },
+  //   {
+  //     id: 6,
+  //     title: "Volunteer Time Tracking Template",
+  //     description: "Excel template for tracking volunteer hours and activities",
+  //     type: "template",
+  //     category: "tools",
+  //     format: "XLSX",
+  //     size: "89 KB",
+  //     downloads: 789,
+  //     uploadDate: "2024-03-15",
+  //     tags: ["template", "tracking", "hours"]
+  //   }
+  // ]);
 
-  
-    {
-      id: 1,
-      title: "Volunteer Handbook 2024",
-      description: "Complete guide for new volunteers including policies, procedures, and best practices",
-      type: "document",
-      category: "training",
-      format: "PDF",
-      size: "2.3 MB",
-      downloads: 1247,
-      uploadDate: "2024-01-15",
-      tags: ["handbook", "training", "policies"]
-    },
-    {
-      id: 2,
-      title: "Community Outreach Training Video",
-      description: "Learn effective community engagement techniques and communication strategies",
-      type: "video",
-      category: "training",
-      format: "MP4",
-      size: "45.7 MB",
-      downloads: 892,
-      uploadDate: "2024-03-10",
-      tags: ["video", "outreach", "communication"]
-    },
-    {
-      id: 3,
-      title: "Event Planning Checklist",
-      description: "Step-by-step checklist for organizing successful volunteer events",
-      type: "document",
-      category: "tools",
-      format: "DOC",
-      size: "156 KB",
-      downloads: 654,
-      uploadDate: "2024-02-20",
-      tags: ["checklist", "events", "planning"]
-    },
-    {
-      id: 4,
-      title: "Safety Guidelines",
-      description: "Important safety protocols and emergency procedures for all volunteers",
-      type: "document",
-      category: "safety",
-      format: "PDF",
-      size: "1.1 MB",
-      downloads: 1156,
-      uploadDate: "2024-01-08",
-      tags: ["safety", "emergency", "protocols"]
-    },
-    {
-      id: 5,
-      title: "First Aid Certification Course",
-      description: "Online first aid training course with certification upon completion",
-      type: "course",
-      category: "training",
-      format: "Online",
-      size: "N/A",
-      downloads: 423,
-      uploadDate: "2024-04-01",
-      tags: ["first aid", "certification", "course"]
-    },
-    {
-      id: 6,
-      title: "Volunteer Time Tracking Template",
-      description: "Excel template for tracking volunteer hours and activities",
-      type: "template",
-      category: "tools",
-      format: "XLSX",
-      size: "89 KB",
-      downloads: 789,
-      uploadDate: "2024-03-15",
-      tags: ["template", "tracking", "hours"]
-    }
-  ]);
-
-  const handleUploadResource = (newResource: any) => {
+  const handleUploadResource = (newResource: Resource) => {
     setResources(prev => [...prev, newResource]);
   };
 
-  const handleDeleteResource = (resourceId: number) => {
+  const handleDeleteResource = (resourceId: string) => {
     setResources(prev => prev.filter(r => r.id !== resourceId));
     toast({
       title: "Resource Deleted",
@@ -105,7 +111,7 @@ const Resources = () => {
     });
   };
 
-  const handleDownloadResource = (resource: any) => {
+  const handleDownloadResource = (resource: Resource) => {
     // In real implementation, this would trigger actual download
     setResources(prev => prev.map(r => 
       r.id === resource.id 
@@ -114,7 +120,7 @@ const Resources = () => {
     ));
     toast({
       title: "Download Started",
-      description: `Downloading "${resource.title}"...`,
+      description: `Downloading "${resource.filename}"...`,
     });
   };
 
@@ -138,9 +144,8 @@ const Resources = () => {
   };
 
   const filteredResources = resources.filter(resource => {
-    const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = resource.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         resource.description.toLowerCase().includes(searchTerm.toLowerCase()); //|| resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesFilter = filterBy === "all" || resource.category === filterBy;
     
@@ -268,7 +273,7 @@ const Resources = () => {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
-                            <CardTitle className="text-lg">{resource.title}</CardTitle>
+                            <CardTitle className="text-lg">{resource.filename}</CardTitle>
                             <Badge variant="outline" className={getCategoryColor(resource.category)}>
                               {resource.category}
                             </Badge>
@@ -288,11 +293,11 @@ const Resources = () => {
                           <span>Added: {resource.uploadDate}</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mb-4">
-                          {resource.tags.map((tag) => (
+                          {/* {resource.tags.map((tag) => (
                             <Badge key={tag} variant="outline" className="text-xs">
                               {tag}
                             </Badge>
-                          ))}
+                          ))} */}
                         </div>
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm" className="flex-1">
@@ -352,7 +357,7 @@ const Resources = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.title}</CardTitle>
+                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
                           <Badge variant="outline" className={getCategoryColor(resource.category)}>
                             {resource.category}
                           </Badge>
@@ -399,7 +404,7 @@ const Resources = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.title}</CardTitle>
+                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
                           <Badge variant="outline" className={getCategoryColor(resource.category)}>
                             {resource.category}
                           </Badge>
@@ -440,7 +445,7 @@ const Resources = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.title}</CardTitle>
+                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
                           <Badge variant="outline" className={getCategoryColor(resource.category)}>
                             {resource.category}
                           </Badge>
@@ -477,7 +482,7 @@ const Resources = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.title}</CardTitle>
+                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
                           <Badge variant="outline" className={getCategoryColor(resource.category)}>
                             {resource.category}
                           </Badge>

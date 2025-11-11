@@ -1,9 +1,6 @@
 import api from "@/api/axios";
+import { ENDPOINTS } from "@/api/endpoints";
 import { ActivityTask } from "@/types/activity";
-
-const ENDPOINTS = {
-  ACTIVITIES: "/activity"
-};
 
 export const getActivities = async (): Promise<ActivityTask[]> => {
   const response = await api.get<{ activities: ActivityTask[] }>(ENDPOINTS.ACTIVITIES);
