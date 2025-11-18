@@ -1,11 +1,15 @@
-import { ActivityTask } from "./activity";
+import { ActivityTask } from './activity';
 
 export interface User {
   id: string;
   name: string;
   email: string;
+  phone: string;
+  country: string;
+  city: string;
   role?: string;
   volunteerActivities?: ActivityTask[] | null;
+  totalWorkHours?: number | null;
   createdAt: string;
 }
 

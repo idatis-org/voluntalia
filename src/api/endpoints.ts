@@ -1,9 +1,10 @@
 export const ENDPOINTS = {
-  USERS: "/users",
-  POSTS: "/posts",
-  LOGIN: "/auth/login",
-  ME: "/auth/me",
-  REGISTER: "/auth/register",
-  WORKLOG: "/worklog",
-  SKILLS: "/skill",
+  USERS: '/users',
+  POSTS: '/posts',
+  LOGIN: '/auth/login',
+  ME: '/auth/me',
+  REGISTER: '/auth/register',
+  RESET_PASSWORD: '/auth/reset-password',
+  WORKLOG: '/worklog',
+  SKILLS: '/skill',
 };

@@ -14,6 +14,7 @@ export const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation(); // 👈 para saber la ruta actual
   
+  var src_voluntalia_logo = "public/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
 
   const navItems = useMemo(() => [
     { name: "Dashboard", href: "/", icon: Heart, roles: ROUTE_PERMISSIONS.DASHBOARD },
@@ -75,10 +76,9 @@ export const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <Heart className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-semibold text-foreground">VoluntALIA</span>
+              <span className="w-36 h-36 flex items-center space-x-3">
+                <img src={src_voluntalia_logo}></img>
+              </span>
             </div>
           </div>
 
