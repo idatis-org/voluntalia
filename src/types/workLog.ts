@@ -12,11 +12,11 @@ export interface PostgresInterval {
 // Interface principal
 export interface WorkLog {
   id: string;
-  week_start: string; 
+  weekStart: string;
   hours: PostgresInterval;
   notes: string;
   status?: string;
-  activity_title?: string;
+  activityTitle?: string;
   activity: ActivityTask | null;
 }
 

@@ -1,7 +1,8 @@
 import api from "@/api/axios";
 import { ENDPOINTS } from "@/api/endpoints";
-import { User, UserResponse } from "@/types/user";
+import { User } from "@/types/user";
 import { ApiResponse } from "@/types/api";
+import { camelizeKeys, snakeifyKeys } from "@/lib/caseUtils";
 
 type CreateUserResponse = {
   user: User;
@@ -10,15 +11,23 @@ type CreateUserResponse = {
 };
 
 export const getUsers = async (): Promise<User[]> => {
-  const response = await api.get<UserResponse>(ENDPOINTS.USERS);
-  console.log(response);
-  return response.data.users;
+  const response = await api.get(ENDPOINTS.USERS);
+  // Normalize keys from snake_case to camelCase
+  const raw = response.data?.users ?? [];
+  const users = camelizeKeys<User[]>(raw).map((u) => ({
+    ...u,
+    // ensure createdAt exists (fallback from snake_case)
+    createdAt: u.createdAt ?? ((u as unknown as Record<string, unknown>)['created_at'] as string | undefined),
+  }));
+  return users;
 };
 
 export const getCurrentUser = async (): Promise<{ user: User }> => {
-  const response = await api.get<{ user: User }>(ENDPOINTS.ME);
-  console.log(response);
-  return response.data;
+  const response = await api.get(ENDPOINTS.ME);
+  const raw = response.data?.user ?? response.data;
+  const user = camelizeKeys<User>(raw);
+  user.createdAt = user.createdAt ?? ((raw as Record<string, unknown>)['created_at'] as string | undefined);
+  return { user };
 };
 
 export const getUserById = async (id: number): Promise<User> => {
@@ -29,15 +38,23 @@ export const getUserById = async (id: number): Promise<User> => {
 export const createUser = async (
   user: Omit<User, "id" | "createdAt">
 ): Promise<User> => {
-  const response = await api.post<CreateUserResponse>(ENDPOINTS.REGISTER, user);
-  console.log(response);
-  return response.data.user;
+  // Convert outgoing keys to snake_case if backend expects it
+  const payload = snakeifyKeys(user);
+  const response = await api.post<CreateUserResponse>(ENDPOINTS.REGISTER, payload);
+  const raw = response.data?.user ?? response.data;
+  const created = camelizeKeys<User>(raw);
+  created.createdAt = created.createdAt ?? ((raw as Record<string, unknown>)['created_at'] as string | undefined);
+  return created;
 };
 
 export const updateUser = async (
   id: number,
   userData: Partial<User>
 ): Promise<User> => {
-  const response = await api.put<User>(`${ENDPOINTS.USERS}/${id}`, userData);
-  return response.data;
+  const payload = snakeifyKeys(userData);
+  const response = await api.put(`${ENDPOINTS.USERS}/${id}`, payload);
+  const raw = response.data;
+  const updated = camelizeKeys<User>(raw);
+  updated.createdAt = updated.createdAt ?? ((raw as Record<string, unknown>)['created_at'] as string | undefined);
+  return updated;
 };
