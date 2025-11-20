@@ -27,7 +27,7 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  var src_voluntalia_logo = "public/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
+  const src_voluntalia_logo = "/images/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -14,7 +14,7 @@ export const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation(); // 👈 para saber la ruta actual
   
-  var src_voluntalia_logo = "public/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
+  const src_voluntalia_logo = "/images/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
 
   const navItems = useMemo(() => [
     { name: "Dashboard", href: "/", icon: Heart, roles: ROUTE_PERMISSIONS.DASHBOARD },
