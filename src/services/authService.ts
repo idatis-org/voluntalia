@@ -1,7 +1,6 @@
 import api from "@/api/axios";
 import { ENDPOINTS } from "@/api/endpoints";
 import { Auth } from "@/types/auth";
-import { ApiResponse } from "@/types/api";
 
 interface LoginPayload {
   email: string;

@@ -9,20 +9,26 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { X, Upload, File, FileText, Video, BookOpen, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Resource, ResourceCategory, ResourceType } from "@/types/resource";
+import { useUploadResource } from "@/hooks/resource/useUploadResource";
 
 interface UploadResourceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpload?: (resource: any) => void;
+  onUpload?: (resource: Resource) => void;
+  categories: ResourceCategory[];
+  types: ResourceType[];
 }
 
-const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceModalProps) => {
+const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }: UploadResourceModalProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFormat, setSelectedFormat] = useState<string>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const uploadResourceMutation = useUploadResource();
   const [newTag, setNewTag] = useState("");
   
   const [formData, setFormData] = useState({
@@ -40,10 +46,10 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
       setSelectedFile(file);
       // Auto-detect type based on file extension
       const extension = file.name.split('.').pop()?.toLowerCase();
-      let type = "document";
-      if (["mp4", "avi", "mov", "wmv"].includes(extension || "")) type = "video";
-      if (["xlsx", "xls", "docx", "pptx"].includes(extension || "")) type = "template";
-      
+      let type = types.find(t => t.name === 'document')?.id;//"document";
+      if (["mp4", "avi", "mov", "wmv"].includes(extension || "")) type = types.find(t => t.name === 'video')?.id;
+      if (["xlsx", "xls", "docx", "pptx"].includes(extension || "")) type = types.find(t => t.name === 'template')?.id;
+      setSelectedFormat(extension || "");
       setFormData(prev => ({
         ...prev,
         type,
@@ -82,50 +88,39 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
     setIsLoading(true);
     setUploadProgress(0);
 
-    try {
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(interval);
-            return 90;
-          }
-          return prev + Math.random() * 20;
+    uploadResourceMutation.mutate({
+        file: selectedFile,
+        title: formData.title,
+        description: formData.description,
+        resource_type_id: formData.type,
+        category_id: formData.category,
+        format: selectedFormat,
+        size: String(selectedFile.size),
+        type: types.find(t => t.id === formData.type)?.name || "document",
+        tags: tags,
+        folder: formData.type,
+      }, {
+      onSuccess: (newResource) => {
+        toast({
+          title: "Resource Uploaded Successfully",
+          description: `Resource has been uploaded and is now available.`,
         });
-      }, 200);
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setUploadProgress(100);
-      
-      const newResource = {
-        ...formData,
-        id: Date.now(),
-        format: selectedFile.name.split('.').pop()?.toUpperCase() || "FILE",
-        size: formatFileSize(selectedFile.size),
-        downloads: 0,
-        uploadDate: new Date().toLocaleDateString(),
-        tags,
-        fileName: selectedFile.name
-      };
-
-      onUpload?.(newResource);
-      toast({
-        title: "Resource Uploaded Successfully",
-        description: `"${newResource.title}" has been uploaded and is now available.`,
-      });
-      onOpenChange(false);
-      resetForm();
-    } catch (error) {
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload resource. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      setUploadProgress(0);
-    }
+        onOpenChange(false);
+        resetForm();
+      },
+      onError: (err) => {
+        console.log(err);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload resource. Please try again.",
+          variant: "destructive",
+        });
+      },
+      onSettled: () => {
+        setIsLoading(false);
+        setUploadProgress(0);
+      }
+    });
   };
 
   const addTag = () => {
@@ -248,11 +243,11 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="training">Training</SelectItem>
-                    <SelectItem value="tools">Tools & Templates</SelectItem>
-                    <SelectItem value="safety">Safety Guidelines</SelectItem>
-                    <SelectItem value="policies">Policies & Procedures</SelectItem>
-                    <SelectItem value="forms">Forms & Documents</SelectItem>
+                    {categories.map((t) => (
+                      <SelectItem key={t.name} value={t.id}>
+                        {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -264,10 +259,11 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="document">Document</SelectItem>
-                    <SelectItem value="video">Video</SelectItem>
-                    <SelectItem value="template">Template</SelectItem>
-                    <SelectItem value="course">Course Material</SelectItem>
+                    {types.map((t) => (
+                      <SelectItem key={t.name} value={t.id}>
+                        {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

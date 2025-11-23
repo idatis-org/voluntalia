@@ -5,13 +5,17 @@ export interface Resource {
   type: string;
   category: string;
   format: string;
-  size: string;
+  user_id: string;
+  size?: number;
   downloads: number;
-  uploadDate: string;
-  tags: string[];
+  created_at: string;
+  tags: string;
   fileUrl?: string;
   visibility?: string;
   permissions?: string;
+  storage_path?: string;
+  resource_type_id?: string;
+  category_id?: string;
 }
 
 export interface ResourceCategory {
@@ -27,12 +31,28 @@ export interface ResourceType {
 export interface CreateResourceDTO {
   title: string;
   description: string;
-  type: string;
-  category: string;
+  resource_type_id: string;
+  category_id: string;
+  file: File;
   format: string;
   size: string;
   tags: string[];
   fileUrl?: string;
   visibility?: string;
   permissions?: string;
+}
+
+export interface CreateResourceWithFileDTO {
+  file: File;               
+  title: string;
+  description: string;
+  resource_type_id: string;
+  category_id: string;
+  format: string;
+  type: string;
+  size: string;
+  tags: string[];
+  visibility?: string;
+  permissions?: string;
+  folder?: string;          
 }
