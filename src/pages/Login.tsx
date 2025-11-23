@@ -27,6 +27,8 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  var src_voluntalia_logo = "public/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -51,12 +53,9 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-soft flex items-center justify-center px-4">
       <Card className="w-full max-w-md shadow-card">
         <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Heart className="h-6 w-6 text-primary-foreground" />
-            </div>
+          <div className="space-y-2">
+            <img src={src_voluntalia_logo}></img>
           </div>
-          <CardTitle className="text-2xl font-semibold">Welcome to VoluntALIA</CardTitle>
           <CardDescription>
             Sign in to access your volunteer dashboard
           </CardDescription>
