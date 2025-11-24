@@ -1,11 +1,24 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Trash2 } from "lucide-react";
-import { User } from "@/types/user";
-import { ActivityTask } from "@/types/activity";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Trash2 } from 'lucide-react';
+import { User } from '@/types/user';
+import { ActivityTask } from '@/types/activity';
 
 interface ActivityManagementModalProps {
   isOpen: boolean;
@@ -18,7 +31,9 @@ interface ActivityManagementModalProps {
   onRemoveActivity: (userId: string, activityId: string) => void;
 }
 
-export const ActivityManagementModal: React.FC<ActivityManagementModalProps> = ({
+export const ActivityManagementModal: React.FC<
+  ActivityManagementModalProps
+> = ({
   isOpen,
   onClose,
   volunteer,
@@ -26,13 +41,14 @@ export const ActivityManagementModal: React.FC<ActivityManagementModalProps> = (
   searchActivity,
   onSearchActivityChange,
   onAssignActivity,
-  onRemoveActivity
+  onRemoveActivity,
 }) => {
   if (!volunteer) return null;
 
-  const availableActivities = activities.filter(a =>
-    a.title.toLowerCase().includes(searchActivity.toLowerCase()) &&
-    !volunteer.volunteerActivities?.some(va => va.id === a.id)
+  const availableActivities = activities.filter(
+    (a) =>
+      a.title.toLowerCase().includes(searchActivity.toLowerCase()) &&
+      !volunteer.volunteerActivities?.some((va) => va.id === a.id)
   );
 
   return (
@@ -63,7 +79,9 @@ export const ActivityManagementModal: React.FC<ActivityManagementModalProps> = (
               </div>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">No activities assigned yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No activities assigned yet.
+            </p>
           )}
 
           <div>
@@ -77,16 +95,16 @@ export const ActivityManagementModal: React.FC<ActivityManagementModalProps> = (
               <CommandList>
                 <CommandEmpty>No activities found.</CommandEmpty>
                 <CommandGroup>
-                  {availableActivities
-                    .slice(0, 5)
-                    .map(activity => (
-                      <CommandItem
-                        key={activity.id}
-                        onSelect={() => onAssignActivity(volunteer.id, activity.id)}
-                      >
-                        {activity.title}
-                      </CommandItem>
-                    ))}
+                  {availableActivities.slice(0, 5).map((activity) => (
+                    <CommandItem
+                      key={activity.id}
+                      onSelect={() =>
+                        onAssignActivity(volunteer.id, activity.id)
+                      }
+                    >
+                      {activity.title}
+                    </CommandItem>
+                  ))}
                 </CommandGroup>
               </CommandList>
             </Command>

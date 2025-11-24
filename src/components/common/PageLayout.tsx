@@ -1,4 +1,4 @@
-import { Navigation } from "@/components/Navigation";
+import { Navigation } from '@/components/Navigation';
 
 interface PageLayoutProps {
   title: string;
@@ -11,7 +11,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   title,
   description,
   children,
-  className = ""
+  className = '',
 }) => {
   return (
     <div className="min-h-screen bg-gradient-subtle">

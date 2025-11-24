@@ -1,8 +1,14 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Search, Filter } from "lucide-react";
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Search, Filter } from 'lucide-react';
 
 export interface FilterOption {
   value: string;
@@ -24,13 +30,13 @@ interface SearchFilterBarProps {
 export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   searchTerm,
   onSearchChange,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = 'Search...',
   filterValue,
   onFilterChange,
   filterOptions = [],
-  filterPlaceholder = "Filter",
+  filterPlaceholder = 'Filter',
   actions,
-  className = ""
+  className = '',
 }) => {
   return (
     <Card className={`shadow-card ${className}`}>
@@ -45,7 +51,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
               className="pl-10"
             />
           </div>
-          
+
           {filterOptions.length > 0 && onFilterChange && (
             <Select value={filterValue} onValueChange={onFilterChange}>
               <SelectTrigger className="w-full sm:w-[180px]">
@@ -61,7 +67,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
               </SelectContent>
             </Select>
           )}
-          
+
           {actions}
         </div>
       </CardContent>

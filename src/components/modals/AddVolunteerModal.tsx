@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -17,13 +17,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { X, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useCreateUser } from "@/hooks/user/useCreateUser";
-import { CreateUserDTO } from "@/types/user";
-import { useSkills } from "@/hooks/skill/useSkills";
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { X, Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useCreateUser } from '@/hooks/user/useCreateUser';
+import { CreateUserDTO } from '@/types/user';
+import { useSkills } from '@/hooks/skill/useSkills';
 
 interface AddVolunteerModalProps {
   open: boolean;
@@ -40,20 +40,20 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
   const { mutate, isPending, error } = useCreateUser();
   const { data: allSkills = [] } = useSkills();
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
-  const [skillSearch, setSkillSearch] = useState("");
+  const [skillSearch, setSkillSearch] = useState('');
 
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    country: "",
-    city: "",
-    address: "",
-    emergency_contact: "",
-    emergency_phone: "",
-    availability: "",
-    motivation: "",
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    country: '',
+    city: '',
+    address: '',
+    emergency_contact: '',
+    emergency_phone: '',
+    availability: '',
+    motivation: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,7 +62,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
     const payload: CreateUserDTO = {
       name: `${formData.firstName} ${formData.lastName}`,
       email: formData.email,
-      password: "aaa111",
+      password: 'aaa111',
       country: formData.country,
       city: formData.city,
       skills: selectedSkills.size > 0 ? Array.from(selectedSkills) : [],
@@ -74,7 +74,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
         onAdd?.(newVolunteer);
         console.log(newVolunteer);
         toast({
-          title: "Volunteer Added Successfully",
+          title: 'Volunteer Added Successfully',
           description: `${newVolunteer.name} ${newVolunteer.email} has been added.`,
         });
         onOpenChange(false);
@@ -83,9 +83,9 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
       onError: (err) => {
         console.log(err);
         toast({
-          title: "Error",
-          description: "Failed to add volunteer. Please try again.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to add volunteer. Please try again.',
+          variant: 'destructive',
         });
       },
     });
@@ -95,7 +95,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
     const newSelected = new Set(selectedSkills);
     newSelected.add(skillId);
     setSelectedSkills(newSelected);
-    setSkillSearch("");
+    setSkillSearch('');
     console.log(selectedSkills);
   };
 
@@ -105,27 +105,30 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
     setSelectedSkills(newSelected);
   };
 
-  const filteredSkills = allSkills.filter(skill => 
-      !selectedSkills.has(skill.id) && 
-      skill.name.toLowerCase().includes(skillSearch.toLowerCase())
-  ).slice(0, 5);
+  const filteredSkills = allSkills
+    .filter(
+      (skill) =>
+        !selectedSkills.has(skill.id) &&
+        skill.name.toLowerCase().includes(skillSearch.toLowerCase())
+    )
+    .slice(0, 5);
 
   const resetForm = () => {
     setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      country: "",
-      city: "",
-      address: "",
-      emergency_contact: "",
-      emergency_phone: "",
-      availability: "",
-      motivation: "",
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      country: '',
+      city: '',
+      address: '',
+      emergency_contact: '',
+      emergency_phone: '',
+      availability: '',
+      motivation: '',
     });
     setSelectedSkills(new Set());
-    setSkillSearch("");
+    setSkillSearch('');
   };
 
   return (
@@ -286,9 +289,13 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
               {selectedSkills.size > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {allSkills
-                    .filter(s => selectedSkills.has(s.id))
+                    .filter((s) => selectedSkills.has(s.id))
                     .map((skill) => (
-                      <Badge key={skill.id} variant="secondary" className="flex items-center gap-1">
+                      <Badge
+                        key={skill.id}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
                         {skill.name}
                         <button
                           type="button"
@@ -298,7 +305,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
                           <X className="h-3 w-3" />
                         </button>
                       </Badge>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>
@@ -353,7 +360,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
               disabled={isPending}
               className="bg-gradient-primary"
             >
-              {isPending ? "Adding..." : "Add Volunteer"}
+              {isPending ? 'Adding...' : 'Add Volunteer'}
             </Button>
           </DialogFooter>
         </form>

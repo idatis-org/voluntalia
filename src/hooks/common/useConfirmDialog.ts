@@ -45,6 +45,6 @@ export const useConfirmDialog = () => {
     isConfirming,
     showDialog,
     hideDialog,
-    handleConfirm
+    handleConfirm,
   };
 };

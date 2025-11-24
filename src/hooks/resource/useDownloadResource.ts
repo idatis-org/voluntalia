@@ -8,7 +8,7 @@ export default function useDownloadResource() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (resource: Resource) => downloadDocument(resource.id), 
+    mutationFn: (resource: Resource) => downloadDocument(resource.id),
     onMutate: (resource) => {
       toast({
         title: 'Download Started',
@@ -20,7 +20,7 @@ export default function useDownloadResource() {
         title: 'Download Complete',
         description: `"${resource.filename}" downloaded successfully.`,
       });
-      queryClient.invalidateQueries({ queryKey: ["resources"] });
+      queryClient.invalidateQueries({ queryKey: ['resources'] });
     },
     onError: (_, resource) => {
       toast({

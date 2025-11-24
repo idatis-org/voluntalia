@@ -14,8 +14,9 @@ function toSnake(s: string) {
  */
 export function camelizeKeys<T = unknown>(obj: unknown): T {
   if (obj == null) return obj as T;
-  if (Array.isArray(obj)) return obj.map((v) => camelizeKeys(v)) as unknown as T;
-  if (typeof obj === "object") {
+  if (Array.isArray(obj))
+    return obj.map((v) => camelizeKeys(v)) as unknown as T;
+  if (typeof obj === 'object') {
     const entries = Object.entries(obj as Record<string, unknown>);
     const result: Record<string, unknown> = {};
     for (const [key, value] of entries) {
@@ -32,8 +33,9 @@ export function camelizeKeys<T = unknown>(obj: unknown): T {
  */
 export function snakeifyKeys<T = unknown>(obj: unknown): T {
   if (obj == null) return obj as T;
-  if (Array.isArray(obj)) return obj.map((v) => snakeifyKeys(v)) as unknown as T;
-  if (typeof obj === "object") {
+  if (Array.isArray(obj))
+    return obj.map((v) => snakeifyKeys(v)) as unknown as T;
+  if (typeof obj === 'object') {
     const entries = Object.entries(obj as Record<string, unknown>);
     const result: Record<string, unknown> = {};
     for (const [key, value] of entries) {

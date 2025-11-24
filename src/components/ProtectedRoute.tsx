@@ -7,9 +7,10 @@ interface ProtectedRouteProps {
   allowedRoles?: readonly string[];
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  allowedRoles = []  }) => {
+  allowedRoles = [],
+}) => {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
@@ -22,7 +23,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Verificar si el usuario tiene al menos uno de los roles permitidos
   if (allowedRoles.length > 0 && user?.role) {
-    const hasPermission = allowedRoles.some(role => user.role.includes(role));
+    const hasPermission = allowedRoles.some((role) => user.role.includes(role));
     if (!hasPermission) {
       // Redirigir a una página de acceso denegado o al dashboard
       return <Navigate to="/unauthorized" replace />;

@@ -1,12 +1,14 @@
-import { User } from "@/types/user";
+import { User } from '@/types/user';
 
 /**
  * Normalize roles input to an array of strings.
  * Accepts a single role string, an array of strings, or undefined/null.
  */
-export function normalizeRoles(roles?: string | readonly string[] | null): string[] {
+export function normalizeRoles(
+  roles?: string | readonly string[] | null
+): string[] {
   if (!roles) return [];
-  if (typeof roles === "string") return [roles];
+  if (typeof roles === 'string') return [roles];
   // roles may be readonly string[]; convert to mutable string[]
   return Array.from(roles).map((r) => String(r));
 }
@@ -14,11 +16,16 @@ export function normalizeRoles(roles?: string | readonly string[] | null): strin
 /**
  * Returns true if the user has the exact role provided.
  */
-export function hasRole(user: Pick<User, "role"> | null | undefined, role: string): boolean {
+export function hasRole(
+  user: Pick<User, 'role'> | null | undefined,
+  role: string
+): boolean {
   if (!user || !user.role) return false;
   const userRoles: string[] = Array.isArray(user.role)
     ? user.role
-    : String(user.role).split(",").map((s) => s.trim());
+    : String(user.role)
+        .split(',')
+        .map((s) => s.trim());
   return userRoles.includes(role);
 }
 
@@ -26,7 +33,7 @@ export function hasRole(user: Pick<User, "role"> | null | undefined, role: strin
  * Returns true if the user has any of the provided roles.
  */
 export function hasAnyRole(
-  user: Pick<User, "role"> | null | undefined,
+  user: Pick<User, 'role'> | null | undefined,
   roles?: string | readonly string[] | null
 ): boolean {
   const wanted = normalizeRoles(roles);
@@ -34,7 +41,9 @@ export function hasAnyRole(
   if (!user || !user.role) return false;
   const userRoles: string[] = Array.isArray(user.role)
     ? user.role
-    : String(user.role).split(",").map((s) => s.trim());
+    : String(user.role)
+        .split(',')
+        .map((s) => s.trim());
   return wanted.some((r) => userRoles.includes(r));
 }
 
@@ -43,7 +52,7 @@ export function hasAnyRole(
  * If allowedRoles is empty or undefined we treat the route as public (accessible).
  */
 export function canAccessRoute(
-  user: Pick<User, "role"> | null | undefined,
+  user: Pick<User, 'role'> | null | undefined,
   allowedRoles?: string | readonly string[] | null
 ): boolean {
   const allowed = normalizeRoles(allowedRoles);

@@ -7,8 +7,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+} from '@/components/ui/alert-dialog';
+import { Loader2 } from 'lucide-react';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -29,9 +29,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isLoading = false,
   title,
   description,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
-  variant = "default"
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  variant = 'default',
 }) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -47,7 +47,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isLoading}
-            className={variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            className={
+              variant === 'destructive'
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : ''
+            }
           >
             {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {confirmText}

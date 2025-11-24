@@ -1,6 +1,12 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface FormModalProps {
   isOpen: boolean;
@@ -18,10 +24,10 @@ export const FormModal: React.FC<FormModalProps> = ({
   onClose,
   onSubmit,
   title,
-  submitText = "Save",
-  cancelText = "Cancel",
+  submitText = 'Save',
+  cancelText = 'Cancel',
   isLoading = false,
-  children
+  children,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

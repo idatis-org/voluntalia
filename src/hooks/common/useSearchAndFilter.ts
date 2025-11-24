@@ -17,39 +17,43 @@ export const useSearchAndFilter = <T>({
   data,
   searchFields,
   defaultFilter = 'all',
-  itemsPerPage = 10
+  itemsPerPage = 10,
 }: UseSearchAndFilterOptions<T>) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({
-    main: defaultFilter
+    main: defaultFilter,
   });
   const [currentPage, setCurrentPage] = useState(1);
 
   const setMainFilter = (value: string) => {
-    setFilters(prev => ({ ...prev, main: value }));
+    setFilters((prev) => ({ ...prev, main: value }));
     setCurrentPage(1);
   };
 
   const setCustomFilter = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
   const filteredData = useMemo(() => {
-    return data.filter(item => {
+    return data.filter((item) => {
       // Search logic
-      const matchesSearch = !searchTerm || searchFields.some(field => {
-        const value = item[field];
-        if (typeof value === 'string') {
-          return value.toLowerCase().includes(searchTerm.toLowerCase());
-        }
-        if (Array.isArray(value)) {
-          return value.some(v => 
-            typeof v === 'string' && v.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        }
-        return false;
-      });
+      const matchesSearch =
+        !searchTerm ||
+        searchFields.some((field) => {
+          const value = item[field];
+          if (typeof value === 'string') {
+            return value.toLowerCase().includes(searchTerm.toLowerCase());
+          }
+          if (Array.isArray(value)) {
+            return value.some(
+              (v) =>
+                typeof v === 'string' &&
+                v.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+          }
+          return false;
+        });
 
       return matchesSearch;
     });
@@ -73,18 +77,18 @@ export const useSearchAndFilter = <T>({
     searchTerm,
     filters,
     currentPage,
-    
+
     // Data
     filteredData,
     paginatedData,
     totalItems,
     totalPages,
-    
+
     // Actions
     setSearchTerm,
     setMainFilter,
     setCustomFilter,
     setCurrentPage,
-    resetSearch
+    resetSearch,
   };
 };

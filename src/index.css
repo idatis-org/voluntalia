@@ -41,17 +41,25 @@ All colors MUST be HSL.
     --soft-green: 150 65% 45%;
     --warm-accent: 45 95% 78%;
     --gentle-gray: 210 10% 92%;
-    
+
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(195 85% 41%), hsl(150 65% 45%));
-    --gradient-soft: linear-gradient(180deg, hsl(150 20% 98%), hsl(150 20% 95%));
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(195 85% 41%),
+      hsl(150 65% 45%)
+    );
+    --gradient-soft: linear-gradient(
+      180deg,
+      hsl(150 20% 98%),
+      hsl(150 20% 95%)
+    );
     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(150 15% 97%));
-    
+
     /* Shadows */
     --shadow-soft: 0 2px 20px -5px hsl(195 85% 41% / 0.1);
     --shadow-card: 0 4px 25px -8px hsl(210 15% 20% / 0.08);
     --shadow-hover: 0 8px 35px -10px hsl(195 85% 41% / 0.2);
-    
+
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -104,17 +112,29 @@ All colors MUST be HSL.
     --border: 215 28% 25%;
     --input: 215 28% 25%;
     --ring: 195 85% 41%;
-    
+
     /* Dark mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(195 85% 41%), hsl(150 65% 45%));
-    --gradient-soft: linear-gradient(180deg, hsl(215 28% 28%), hsl(215 28% 25%));
-    --gradient-card: linear-gradient(145deg, hsl(220 33% 20%), hsl(215 28% 25%));
-    
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(195 85% 41%),
+      hsl(150 65% 45%)
+    );
+    --gradient-soft: linear-gradient(
+      180deg,
+      hsl(215 28% 28%),
+      hsl(215 28% 25%)
+    );
+    --gradient-card: linear-gradient(
+      145deg,
+      hsl(220 33% 20%),
+      hsl(215 28% 25%)
+    );
+
     /* Dark mode shadows */
     --shadow-soft: 0 2px 20px -5px hsl(0 0% 0% / 0.3);
     --shadow-card: 0 4px 25px -8px hsl(0 0% 0% / 0.4);
     --shadow-hover: 0 8px 35px -10px hsl(195 85% 41% / 0.25);
-    
+
     /* Sidebar colors matching the new scheme */
     --sidebar-background: 217 33% 17%;
     --sidebar-foreground: 210 20% 98%;

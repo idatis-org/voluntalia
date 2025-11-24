@@ -1,6 +1,6 @@
 /**
  * Sistema de Permisos y Roles - VoluntALIA
- * 
+ *
  * Este archivo centraliza la configuración de permisos por rol.
  * Usado por componentes de navegación y protección de rutas.
  */
@@ -15,7 +15,7 @@ export const ROLES = {
   ADMIN: 'ADMIN', // Futuro
 } as const;
 
-export type Role = typeof ROLES[keyof typeof ROLES];
+export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 // ============================================================================
 // PERMISOS POR RUTA
@@ -42,34 +42,34 @@ export const PERMISSIONS = {
   CREATE_VOLUNTEER: [ROLES.COORDINATOR],
   EDIT_VOLUNTEER: [ROLES.COORDINATOR],
   DELETE_VOLUNTEER: [ROLES.COORDINATOR],
-  
+
   // Gestión de Actividades
   VIEW_ALL_ACTIVITIES: [ROLES.COORDINATOR],
   CREATE_ACTIVITY: [ROLES.COORDINATOR],
   EDIT_ACTIVITY: [ROLES.COORDINATOR],
   DELETE_ACTIVITY: [ROLES.COORDINATOR],
   VIEW_ASSIGNED_ACTIVITIES: [ROLES.VOLUNTEER],
-  
+
   // Gestión de Horas
   VIEW_ALL_HOURS: [ROLES.COORDINATOR],
   VIEW_OWN_HOURS: [ROLES.COORDINATOR, ROLES.VOLUNTEER],
   EDIT_ALL_HOURS: [ROLES.COORDINATOR],
   EDIT_OWN_HOURS: [ROLES.VOLUNTEER],
-  
+
   // Recursos
   VIEW_RESOURCES: [ROLES.COORDINATOR],
   UPLOAD_RESOURCES: [ROLES.COORDINATOR],
   DELETE_RESOURCES: [ROLES.COORDINATOR],
-  
+
   // Notificaciones
   SEND_NOTIFICATIONS: [ROLES.COORDINATOR],
   RECEIVE_NOTIFICATIONS: [ROLES.COORDINATOR, ROLES.VOLUNTEER],
-  
+
   // Perfil
   VIEW_OWN_PROFILE: [ROLES.COORDINATOR, ROLES.VOLUNTEER],
   EDIT_OWN_PROFILE: [ROLES.COORDINATOR, ROLES.VOLUNTEER],
   VIEW_OTHER_PROFILES: [ROLES.COORDINATOR],
-  
+
   // Configuración
   ACCESS_SETTINGS: [ROLES.COORDINATOR],
   MANAGE_ROLES: [ROLES.ADMIN],
@@ -83,7 +83,7 @@ export const PERMISSIONS = {
  * Verifica si un usuario tiene permiso para acceder a una ruta
  */
 export const canAccessRoute = (
-  userRole: string | undefined, 
+  userRole: string | undefined,
   route: keyof typeof ROUTE_PERMISSIONS
 ): boolean => {
   if (!userRole) return false;
@@ -106,7 +106,7 @@ export const hasPermission = (
  */
 export const getAllowedRoutes = (userRole: string | undefined): string[] => {
   if (!userRole) return [];
-  
+
   return Object.entries(ROUTE_PERMISSIONS)
     .filter(([_, roles]) => (roles as readonly string[]).includes(userRole))
     .map(([route]) => route.toLowerCase().replace('_', '-'));

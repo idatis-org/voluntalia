@@ -1,18 +1,31 @@
-import api from "@/api/axios";
-import { ENDPOINTS } from "@/api/endpoints";
-import { CreateResourceDTO, CreateResourceWithFileDTO, Resource, ResourceCategory, ResourceType } from "@/types/resource";
+import api from '@/api/axios';
+import { ENDPOINTS } from '@/api/endpoints';
+import {
+  CreateResourceDTO,
+  CreateResourceWithFileDTO,
+  Resource,
+  ResourceCategory,
+  ResourceType,
+} from '@/types/resource';
 
 export const getFiles = async (): Promise<Resource[]> => {
   const response = await api.get<{ documents: Resource[] }>(ENDPOINTS.RESOURCE);
   return response.data.documents || [];
-}
+};
 
-export const uploadFile = async (resource: CreateResourceDTO): Promise<Resource> => {
-  const response = await api.post<{ resource: Resource }>(`${ENDPOINTS.RESOURCE}/upload`, resource);
+export const uploadFile = async (
+  resource: CreateResourceDTO
+): Promise<Resource> => {
+  const response = await api.post<{ resource: Resource }>(
+    `${ENDPOINTS.RESOURCE}/upload`,
+    resource
+  );
   return response.data.resource;
 };
 
-export const uploadResourceWithFile = async (dto: CreateResourceWithFileDTO): Promise<Resource> => {
+export const uploadResourceWithFile = async (
+  dto: CreateResourceWithFileDTO
+): Promise<Resource> => {
   const formData = new FormData();
 
   // archivo
@@ -30,7 +43,9 @@ export const uploadResourceWithFile = async (dto: CreateResourceWithFileDTO): Pr
   formData.append('permissions', dto.permissions ?? '');
   formData.append('tags', JSON.stringify(dto.tags)); // array como string
 
-  const folderQuery = dto.folder ? `?folder=${encodeURIComponent(dto.folder)}` : '';
+  const folderQuery = dto.folder
+    ? `?folder=${encodeURIComponent(dto.folder)}`
+    : '';
 
   const response = await api.post<{ resource: Resource }>(
     `${ENDPOINTS.RESOURCE}/upload${folderQuery}`,
@@ -61,16 +76,20 @@ export const downloadDocument = async (id: string): Promise<void> => {
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
-}
+};
 
 // Category and resource type management can be geetted from the backend if needed in the future.
 export const getResourceCategories = async (): Promise<ResourceCategory[]> => {
-  const response = await api.get<{ categories: ResourceCategory[] }>(`${ENDPOINTS.RESOURCE}/categories`);
+  const response = await api.get<{ categories: ResourceCategory[] }>(
+    `${ENDPOINTS.RESOURCE}/categories`
+  );
   return response.data.categories;
 };
 
 export const getResourceTypes = async (): Promise<ResourceType[]> => {
-  const response = await api.get<{ types: ResourceType[] }>(`${ENDPOINTS.RESOURCE}/types`);
+  const response = await api.get<{ types: ResourceType[] }>(
+    `${ENDPOINTS.RESOURCE}/types`
+  );
   return response.data.types;
 };
 

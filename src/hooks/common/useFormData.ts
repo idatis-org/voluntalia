@@ -9,26 +9,29 @@ export interface UseFormDataOptions<T> {
 export const useFormData = <T extends Record<string, any>>({
   initialValues,
   onSubmit,
-  validate
+  validate,
 }: UseFormDataOptions<T>) => {
   const [formData, setFormData] = useState<T>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateField = useCallback((field: keyof T, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when field is updated
-    if (errors[field as string]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field as string];
-        return newErrors;
-      });
-    }
-  }, [errors]);
+  const updateField = useCallback(
+    (field: keyof T, value: any) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      // Clear error when field is updated
+      if (errors[field as string]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field as string];
+          return newErrors;
+        });
+      }
+    },
+    [errors]
+  );
 
   const updateFormData = useCallback((updates: Partial<T>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
+    setFormData((prev) => ({ ...prev, ...updates }));
   }, []);
 
   const resetForm = useCallback(() => {
@@ -38,13 +41,13 @@ export const useFormData = <T extends Record<string, any>>({
 
   const validateForm = useCallback(() => {
     if (!validate) return true;
-    
+
     const validationErrors = validate(formData);
     if (validationErrors) {
       setErrors(validationErrors);
       return false;
     }
-    
+
     setErrors({});
     return true;
   }, [formData, validate]);
@@ -72,6 +75,6 @@ export const useFormData = <T extends Record<string, any>>({
     updateFormData,
     resetForm,
     validateForm,
-    handleSubmit
+    handleSubmit,
   };
 };

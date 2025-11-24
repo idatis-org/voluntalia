@@ -151,7 +151,7 @@ export const useVolunteersPage = () => {
     if (method === 'email') {
       window.location.href = `mailto:${volunteer.email}`;
     } else {
-      window.location.href = `tel:`;
+      window.location.href = 'tel:';
     }
   };
 

@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { getResourceTypes } from "@/services/resourceService";
-import { ResourceType } from "@/types/resource";
+import { useQuery } from '@tanstack/react-query';
+import { getResourceTypes } from '@/services/resourceService';
+import { ResourceType } from '@/types/resource';
 
 export const useResourceType = () => {
   return useQuery<ResourceType[], Error>({

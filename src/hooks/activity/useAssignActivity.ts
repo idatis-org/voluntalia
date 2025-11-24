@@ -5,8 +5,13 @@ export const useAssignActivity = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ activityId, userId }: { activityId: string; userId: string }) =>
-      assignActivity(activityId, userId), 
+    mutationFn: ({
+      activityId,
+      userId,
+    }: {
+      activityId: string;
+      userId: string;
+    }) => assignActivity(activityId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -18,8 +23,13 @@ export const useUnassignActivity = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ activityId, userId }: { activityId: string; userId: string }) =>
-      unassignActivity(activityId, userId), 
+    mutationFn: ({
+      activityId,
+      userId,
+    }: {
+      activityId: string;
+      userId: string;
+    }) => unassignActivity(activityId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });

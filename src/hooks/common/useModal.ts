@@ -9,11 +9,14 @@ export const useModal = <T = any>(options: UseModalOptions<T> = {}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [data, setData] = useState<T | null>(null);
 
-  const openModal = useCallback((modalData?: T) => {
-    setData(modalData || null);
-    setIsOpen(true);
-    options.onOpen?.(modalData);
-  }, [options]);
+  const openModal = useCallback(
+    (modalData?: T) => {
+      setData(modalData || null);
+      setIsOpen(true);
+      options.onOpen?.(modalData);
+    },
+    [options]
+  );
 
   const closeModal = useCallback(() => {
     setIsOpen(false);
@@ -34,6 +37,6 @@ export const useModal = <T = any>(options: UseModalOptions<T> = {}) => {
     data,
     openModal,
     closeModal,
-    toggleModal
+    toggleModal,
   };
 };

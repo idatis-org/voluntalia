@@ -1,150 +1,199 @@
-import { useState } from "react";
-import { Navigation } from "@/components/Navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, MapPin, Users, Search, Filter, Plus, MoreHorizontal, Edit, Trash2, UserPlus } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import CreateEventModal from "@/components/modals/CreateEventModal";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { Navigation } from '@/components/Navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Search,
+  Filter,
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  UserPlus,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import CreateEventModal from '@/components/modals/CreateEventModal';
+import { useToast } from '@/hooks/use-toast';
 
 const Events = () => {
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterBy, setFilterBy] = useState("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterBy, setFilterBy] = useState('all');
   const [createEventOpen, setCreateEventOpen] = useState(false);
   const [events, setEvents] = useState([
-
-  
     {
       id: 1,
-      title: "Community Food Drive",
-      description: "Help distribute food to families in need during the holiday season",
-      date: "2024-12-28",
-      time: "9:00 AM - 2:00 PM",
-      location: "Community Center, 123 Main St",
+      title: 'Community Food Drive',
+      description:
+        'Help distribute food to families in need during the holiday season',
+      date: '2024-12-28',
+      time: '9:00 AM - 2:00 PM',
+      location: 'Community Center, 123 Main St',
       volunteers: 12,
       maxVolunteers: 20,
-      category: "community",
-      status: "upcoming",
-      organizer: "Sarah Johnson"
+      category: 'community',
+      status: 'upcoming',
+      organizer: 'Sarah Johnson',
     },
     {
       id: 2,
-      title: "Youth Education Workshop",
-      description: "Teaching basic computer skills to underprivileged youth",
-      date: "2024-12-30",
-      time: "1:00 PM - 4:00 PM",
-      location: "Public Library, 456 Oak Ave",
+      title: 'Youth Education Workshop',
+      description: 'Teaching basic computer skills to underprivileged youth',
+      date: '2024-12-30',
+      time: '1:00 PM - 4:00 PM',
+      location: 'Public Library, 456 Oak Ave',
       volunteers: 8,
       maxVolunteers: 15,
-      category: "education",
-      status: "upcoming",
-      organizer: "Michael Chen"
+      category: 'education',
+      status: 'upcoming',
+      organizer: 'Michael Chen',
     },
     {
       id: 3,
-      title: "Senior Care Visit",
-      description: "Spend time with elderly residents and assist with daily activities",
-      date: "2025-01-02",
-      time: "10:00 AM - 3:00 PM",
-      location: "Sunset Care Home, 789 Pine Rd",
+      title: 'Senior Care Visit',
+      description:
+        'Spend time with elderly residents and assist with daily activities',
+      date: '2025-01-02',
+      time: '10:00 AM - 3:00 PM',
+      location: 'Sunset Care Home, 789 Pine Rd',
       volunteers: 15,
       maxVolunteers: 15,
-      category: "healthcare",
-      status: "full",
-      organizer: "Lisa Thompson"
+      category: 'healthcare',
+      status: 'full',
+      organizer: 'Lisa Thompson',
     },
     {
       id: 4,
-      title: "Environmental Cleanup",
-      description: "Help clean up the local park and plant new trees",
-      date: "2025-01-05",
-      time: "8:00 AM - 12:00 PM",
-      location: "Central Park, East Entrance",
+      title: 'Environmental Cleanup',
+      description: 'Help clean up the local park and plant new trees',
+      date: '2025-01-05',
+      time: '8:00 AM - 12:00 PM',
+      location: 'Central Park, East Entrance',
       volunteers: 5,
       maxVolunteers: 25,
-      category: "environment",
-      status: "upcoming",
-      organizer: "Emma Rodriguez"
+      category: 'environment',
+      status: 'upcoming',
+      organizer: 'Emma Rodriguez',
     },
     {
       id: 5,
-      title: "Holiday Meal Service",
-      description: "Served meals to 200+ community members",
-      date: "2024-12-25",
-      time: "11:00 AM - 3:00 PM",
-      location: "Community Kitchen, 321 Elm St",
+      title: 'Holiday Meal Service',
+      description: 'Served meals to 200+ community members',
+      date: '2024-12-25',
+      time: '11:00 AM - 3:00 PM',
+      location: 'Community Kitchen, 321 Elm St',
       volunteers: 18,
       maxVolunteers: 20,
-      category: "community",
-      status: "completed",
-      organizer: "David Park"
-    }
+      category: 'community',
+      status: 'completed',
+      organizer: 'David Park',
+    },
   ]);
 
   const handleCreateEvent = (newEvent: any) => {
-    setEvents(prev => [...prev, newEvent]);
+    setEvents((prev) => [...prev, newEvent]);
   };
 
   const handleJoinEvent = (eventId: number) => {
-    setEvents(prev => prev.map(event => 
-      event.id === eventId 
-        ? { ...event, volunteers: event.volunteers + 1, status: event.volunteers + 1 >= event.maxVolunteers ? 'full' : event.status }
-        : event
-    ));
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === eventId
+          ? {
+              ...event,
+              volunteers: event.volunteers + 1,
+              status:
+                event.volunteers + 1 >= event.maxVolunteers
+                  ? 'full'
+                  : event.status,
+            }
+          : event
+      )
+    );
     toast({
-      title: "Successfully Registered",
-      description: "You have been registered for this event.",
+      title: 'Successfully Registered',
+      description: 'You have been registered for this event.',
     });
   };
 
   const handleDeleteEvent = (eventId: number) => {
-    setEvents(prev => prev.filter(e => e.id !== eventId));
+    setEvents((prev) => prev.filter((e) => e.id !== eventId));
     toast({
-      title: "Event Deleted",
-      description: "The event has been successfully removed.",
+      title: 'Event Deleted',
+      description: 'The event has been successfully removed.',
     });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'upcoming': return 'default';
-      case 'full': return 'destructive';
-      case 'completed': return 'secondary';
-      default: return 'default';
+      case 'upcoming':
+        return 'default';
+      case 'full':
+        return 'destructive';
+      case 'completed':
+        return 'secondary';
+      default:
+        return 'default';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'community': return 'bg-blue-100 text-blue-800';
-      case 'education': return 'bg-green-100 text-green-800';
-      case 'healthcare': return 'bg-red-100 text-red-800';
-      case 'environment': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'community':
+        return 'bg-blue-100 text-blue-800';
+      case 'education':
+        return 'bg-green-100 text-green-800';
+      case 'healthcare':
+        return 'bg-red-100 text-red-800';
+      case 'environment':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const filterEvents = (status: string) => {
-    return events.filter(event => {
-      const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           event.location.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesFilter = filterBy === "all" || event.category === filterBy;
-      const matchesStatus = status === "all" || event.status === status;
-      
+    return events.filter((event) => {
+      const matchesSearch =
+        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesFilter = filterBy === 'all' || event.category === filterBy;
+      const matchesStatus = status === 'all' || event.status === status;
+
       return matchesSearch && matchesFilter && matchesStatus;
     });
   };
 
-  const upcomingEvents = filterEvents("upcoming");
-  const completedEvents = filterEvents("completed");
-  const allEvents = filterEvents("all");
+  const upcomingEvents = filterEvents('upcoming');
+  const completedEvents = filterEvents('completed');
+  const allEvents = filterEvents('all');
 
   return (
     <div className="min-h-screen bg-background">
@@ -152,7 +201,9 @@ const Events = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Events</h1>
-          <p className="text-muted-foreground mt-2">Manage volunteer events and track participation</p>
+          <p className="text-muted-foreground mt-2">
+            Manage volunteer events and track participation
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -174,7 +225,9 @@ const Events = () => {
                 <Users className="h-8 w-8 text-soft-green" />
                 <div className="ml-4">
                   <p className="text-2xl font-bold text-foreground">156</p>
-                  <p className="text-sm text-muted-foreground">Total Participants</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total Participants
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -229,7 +282,7 @@ const Events = () => {
                   <SelectItem value="environment">Environment</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
+              <Button
                 onClick={() => setCreateEventOpen(true)}
                 className="bg-gradient-primary hover:shadow-hover transition-smooth"
               >
@@ -243,11 +296,17 @@ const Events = () => {
         {/* Events Tabs */}
         <Tabs defaultValue="upcoming" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="upcoming" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="upcoming"
+              className="flex items-center space-x-2"
+            >
               <Clock className="h-4 w-4" />
               <span>Upcoming ({upcomingEvents.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="completed" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="completed"
+              className="flex items-center space-x-2"
+            >
               <Calendar className="h-4 w-4" />
               <span>Completed ({completedEvents.length})</span>
             </TabsTrigger>
@@ -260,18 +319,28 @@ const Events = () => {
           <TabsContent value="upcoming">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {upcomingEvents.map((event) => (
-                <Card key={event.id} className="shadow-card hover:shadow-hover transition-smooth">
+                <Card
+                  key={event.id}
+                  className="shadow-card hover:shadow-hover transition-smooth"
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{event.title}</CardTitle>
-                        <CardDescription className="mb-3">{event.description}</CardDescription>
+                        <CardTitle className="text-lg mb-2">
+                          {event.title}
+                        </CardTitle>
+                        <CardDescription className="mb-3">
+                          {event.description}
+                        </CardDescription>
                       </div>
                       <div className="flex flex-col items-end space-y-2">
                         <Badge variant={getStatusColor(event.status)}>
                           {event.status}
                         </Badge>
-                        <Badge variant="outline" className={getCategoryColor(event.category)}>
+                        <Badge
+                          variant="outline"
+                          className={getCategoryColor(event.category)}
+                        >
                           {event.category}
                         </Badge>
                       </div>
@@ -281,7 +350,9 @@ const Events = () => {
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.date} • {event.time}</span>
+                        <span>
+                          {event.date} • {event.time}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -289,7 +360,9 @@ const Events = () => {
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.volunteers}/{event.maxVolunteers} volunteers</span>
+                        <span>
+                          {event.volunteers}/{event.maxVolunteers} volunteers
+                        </span>
                       </div>
                       <div className="flex items-center justify-between pt-4">
                         <span className="text-sm text-muted-foreground">
@@ -299,8 +372,8 @@ const Events = () => {
                           <Button variant="outline" size="sm">
                             View Details
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             onClick={() => handleJoinEvent(event.id)}
                             disabled={event.status === 'full'}
                           >
@@ -322,7 +395,7 @@ const Events = () => {
                                 Manage Participants
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => handleDeleteEvent(event.id)}
                                 className="text-destructive focus:text-destructive"
                               >
@@ -347,12 +420,19 @@ const Events = () => {
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{event.title}</CardTitle>
-                        <CardDescription className="mb-3">{event.description}</CardDescription>
+                        <CardTitle className="text-lg mb-2">
+                          {event.title}
+                        </CardTitle>
+                        <CardDescription className="mb-3">
+                          {event.description}
+                        </CardDescription>
                       </div>
                       <div className="flex flex-col items-end space-y-2">
                         <Badge variant="secondary">completed</Badge>
-                        <Badge variant="outline" className={getCategoryColor(event.category)}>
+                        <Badge
+                          variant="outline"
+                          className={getCategoryColor(event.category)}
+                        >
                           {event.category}
                         </Badge>
                       </div>
@@ -362,7 +442,9 @@ const Events = () => {
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.date} • {event.time}</span>
+                        <span>
+                          {event.date} • {event.time}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -390,18 +472,28 @@ const Events = () => {
           <TabsContent value="all">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {allEvents.map((event) => (
-                <Card key={event.id} className="shadow-card hover:shadow-hover transition-smooth">
+                <Card
+                  key={event.id}
+                  className="shadow-card hover:shadow-hover transition-smooth"
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{event.title}</CardTitle>
-                        <CardDescription className="mb-3">{event.description}</CardDescription>
+                        <CardTitle className="text-lg mb-2">
+                          {event.title}
+                        </CardTitle>
+                        <CardDescription className="mb-3">
+                          {event.description}
+                        </CardDescription>
                       </div>
                       <div className="flex flex-col items-end space-y-2">
                         <Badge variant={getStatusColor(event.status)}>
                           {event.status}
                         </Badge>
-                        <Badge variant="outline" className={getCategoryColor(event.category)}>
+                        <Badge
+                          variant="outline"
+                          className={getCategoryColor(event.category)}
+                        >
                           {event.category}
                         </Badge>
                       </div>
@@ -411,7 +503,9 @@ const Events = () => {
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2 text-sm">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.date} • {event.time}</span>
+                        <span>
+                          {event.date} • {event.time}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -420,10 +514,9 @@ const Events = () => {
                       <div className="flex items-center space-x-2 text-sm">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          {event.status === 'completed' 
+                          {event.status === 'completed'
                             ? `${event.volunteers} volunteers participated`
-                            : `${event.volunteers}/${event.maxVolunteers} volunteers`
-                          }
+                            : `${event.volunteers}/${event.maxVolunteers} volunteers`}
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-4">
@@ -432,10 +525,15 @@ const Events = () => {
                         </span>
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm">
-                            {event.status === 'completed' ? 'View Report' : 'View Details'}
+                            {event.status === 'completed'
+                              ? 'View Report'
+                              : 'View Details'}
                           </Button>
                           {event.status !== 'completed' && (
-                            <Button size="sm" disabled={event.status === 'full'}>
+                            <Button
+                              size="sm"
+                              disabled={event.status === 'full'}
+                            >
                               {event.status === 'full' ? 'Full' : 'Join Event'}
                             </Button>
                           )}
@@ -449,8 +547,8 @@ const Events = () => {
           </TabsContent>
         </Tabs>
       </main>
-      
-      <CreateEventModal 
+
+      <CreateEventModal
         open={createEventOpen}
         onOpenChange={setCreateEventOpen}
         onCreate={handleCreateEvent}

@@ -1,16 +1,22 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, Eye, EyeOff, Github, Chrome } from "lucide-react";
-import { loginUser } from "@/services/authService";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
-import ForgotPasswordModal from "@/components/modals/ForgotPasswordModal";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Heart, Eye, EyeOff, Github, Chrome } from 'lucide-react';
+import { loginUser } from '@/services/authService';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+import ForgotPasswordModal from '@/components/modals/ForgotPasswordModal';
+import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
   const { toast } = useToast();
@@ -22,29 +28,30 @@ const Login = () => {
   //   email: "",
   //   password: ""
   // });
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  var src_voluntalia_logo = "public/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
+  const src_voluntalia_logo =
+    'public/voluntalia_thumbnail_' + localStorage.getItem('theme') + '.png';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       const data = await loginUser({ email, password });
-      login(data); 
-      navigate("/");
-    } catch (err) { 
+      login(data);
+      navigate('/');
+    } catch (err) {
       console.log(err);
       toast({
-        variant: "destructive",   // rojo por defecto
-        title: "Login failed",
+        variant: 'destructive', // rojo por defecto
+        title: 'Login failed',
         duration: 3000,
-        description: err.response.data.error || "Invalid credentials",
+        description: err.response.data.error || 'Invalid credentials',
       });
-    }finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -79,7 +86,7 @@ const Login = () => {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   required
                   value={password}
@@ -101,15 +108,17 @@ const Login = () => {
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
+                <Checkbox
+                  id="remember"
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked === true)}
                 />
-                <Label htmlFor="remember" className="text-sm">Remember me</Label>
+                <Label htmlFor="remember" className="text-sm">
+                  Remember me
+                </Label>
               </div>
               <button
                 type="button"
@@ -120,18 +129,18 @@ const Login = () => {
               </button>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-gradient-primary hover:shadow-hover transition-smooth"
               disabled={isLoading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </CardContent>
       </Card>
-      
-      <ForgotPasswordModal 
+
+      <ForgotPasswordModal
         open={forgotPasswordOpen}
         onOpenChange={setForgotPasswordOpen}
       />

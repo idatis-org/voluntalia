@@ -29,10 +29,13 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   });
 
   const getSystemTheme = (): 'light' | 'dark' => {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
   };
 
-  const actualTheme: 'light' | 'dark' = theme === 'system' ? getSystemTheme() : theme;
+  const actualTheme: 'light' | 'dark' =
+    theme === 'system' ? getSystemTheme() : theme;
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -40,7 +43,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
-    
+
     if (actualTheme === 'dark') {
       root.classList.add('dark');
     } else {

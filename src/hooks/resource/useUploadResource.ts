@@ -1,5 +1,9 @@
 // hooks/useUploadResource.ts
-import { useMutation, UseMutationResult, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  UseMutationResult,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { CreateResourceWithFileDTO, Resource } from '@/types/resource';
 import { uploadResourceWithFile } from '@/services/resourceService';
 

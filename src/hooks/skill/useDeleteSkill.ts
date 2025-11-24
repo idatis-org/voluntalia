@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteSkill } from "@/services/skillService";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { deleteSkill } from '@/services/skillService';
 
 export const useDeleteSkill = () => {
   const queryClient = useQueryClient();
@@ -7,7 +7,7 @@ export const useDeleteSkill = () => {
   return useMutation({
     mutationFn: (id: string) => deleteSkill(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ['skills'] });
     },
   });
 };

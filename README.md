@@ -6,6 +6,7 @@ Construida con **React**, se conecta a la API de VoluntALIA para mostrar y admin
 ---
 
 ## 🚀 Tecnologías utilizadas
+
 - React
 - Typescript / TSX
 - tailwindcss
@@ -16,11 +17,13 @@ Construida con **React**, se conecta a la API de VoluntALIA para mostrar y admin
 ## ⚙️ Instalación y ejecución
 
 1. Instala las dependencias:
+
    ```bash
    npm install
    ```
 
 2. Ejecuta la aplicación en modo desarrollo:
+
    ```bash
    npm run dev
    ```
@@ -34,8 +37,8 @@ Construida con **React**, se conecta a la API de VoluntALIA para mostrar y admin
 ---
 
 ## 📌 Notas
+
 - Asegúrate de que la **API de VoluntALIA** esté corriendo antes de usar el frontend para que pueda conectarse correctamente.
 - Puedes configurar la URL de la API en el archivo de configuración o variables de entorno de la app (por ejemplo `.env`).
 
 ---
-

@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createSkill } from "@/services/skillService";
-import { CreateSkillDTO } from "@/types/skill";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createSkill } from '@/services/skillService';
+import { CreateSkillDTO } from '@/types/skill';
 
 export const useCreateSkill = () => {
   const queryClient = useQueryClient();
@@ -8,7 +8,7 @@ export const useCreateSkill = () => {
   return useMutation({
     mutationFn: (skill: CreateSkillDTO) => createSkill(skill),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ['skills'] });
     },
   });
 };

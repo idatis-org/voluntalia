@@ -1,16 +1,16 @@
-import axios from "axios";
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,//"http://localhost:4000",//import.meta.env.VITE_API_URL || "https://api.miapp.com",
+  baseURL: import.meta.env.VITE_API_URL, //"http://localhost:4000",//import.meta.env.VITE_API_URL || "https://api.miapp.com",
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
   withCredentials: true, // útil si tu API usa cookies/sesiones
 });
 
 // Interceptor de requests (para añadir token JWT)
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,7 +21,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("API Error:", error.response?.data || error.message);
+    console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );

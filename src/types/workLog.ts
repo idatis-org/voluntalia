@@ -1,4 +1,4 @@
-import { ActivityTask } from "./activity";
+import { ActivityTask } from './activity';
 
 export interface PostgresInterval {
   years?: number;
@@ -20,16 +20,15 @@ export interface WorkLog {
   activity: ActivityTask | null;
 }
 
-export interface CreateWorkLogDTO{
-  week_start: string; 
+export interface CreateWorkLogDTO {
+  week_start: string;
   hours: string;
   notes: string;
   activity: ActivityTask | null;
 }
 
-export type UpdateWorkLogDTO = Partial<CreateWorkLogDTO>
+export type UpdateWorkLogDTO = Partial<CreateWorkLogDTO>;
 
-
-export interface WorkLogReponse{
-    worklog: WorkLog[];
+export interface WorkLogReponse {
+  worklog: WorkLog[];
 }

@@ -1,16 +1,29 @@
-import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { X, Upload, File, FileText, Video, BookOpen, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Resource, ResourceCategory, ResourceType } from "@/types/resource";
-import { useUploadResource } from "@/hooks/resource/useUploadResource";
+import { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { X, Upload, File, FileText, Video, BookOpen, Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Resource, ResourceCategory, ResourceType } from '@/types/resource';
+import { useUploadResource } from '@/hooks/resource/useUploadResource';
 
 interface UploadResourceModalProps {
   open: boolean;
@@ -20,7 +33,13 @@ interface UploadResourceModalProps {
   types: ResourceType[];
 }
 
-const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }: UploadResourceModalProps) => {
+const UploadResourceModal = ({
+  open,
+  onOpenChange,
+  onUpload,
+  categories,
+  types,
+}: UploadResourceModalProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,15 +48,15 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
   const [selectedFormat, setSelectedFormat] = useState<string>(null);
   const [tags, setTags] = useState<string[]>([]);
   const uploadResourceMutation = useUploadResource();
-  const [newTag, setNewTag] = useState("");
-  
+  const [newTag, setNewTag] = useState('');
+
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "",
-    type: "",
-    visibility: "public",
-    permissions: "all"
+    title: '',
+    description: '',
+    category: '',
+    type: '',
+    visibility: 'public',
+    permissions: 'all',
   });
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,14 +65,16 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
       setSelectedFile(file);
       // Auto-detect type based on file extension
       const extension = file.name.split('.').pop()?.toLowerCase();
-      let type = types.find(t => t.name === 'document')?.id;//"document";
-      if (["mp4", "avi", "mov", "wmv"].includes(extension || "")) type = types.find(t => t.name === 'video')?.id;
-      if (["xlsx", "xls", "docx", "pptx"].includes(extension || "")) type = types.find(t => t.name === 'template')?.id;
-      setSelectedFormat(extension || "");
-      setFormData(prev => ({
+      let type = types.find((t) => t.name === 'document')?.id; //"document";
+      if (['mp4', 'avi', 'mov', 'wmv'].includes(extension || ''))
+        type = types.find((t) => t.name === 'video')?.id;
+      if (['xlsx', 'xls', 'docx', 'pptx'].includes(extension || ''))
+        type = types.find((t) => t.name === 'template')?.id;
+      setSelectedFormat(extension || '');
+      setFormData((prev) => ({
         ...prev,
         type,
-        title: prev.title || file.name.split('.')[0]
+        title: prev.title || file.name.split('.')[0],
       }));
     }
   };
@@ -61,8 +82,9 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
   const getFileIcon = () => {
     if (!selectedFile) return File;
     const extension = selectedFile.name.split('.').pop()?.toLowerCase();
-    if (["mp4", "avi", "mov", "wmv"].includes(extension || "")) return Video;
-    if (["pdf", "doc", "docx", "txt"].includes(extension || "")) return FileText;
+    if (['mp4', 'avi', 'mov', 'wmv'].includes(extension || '')) return Video;
+    if (['pdf', 'doc', 'docx', 'txt'].includes(extension || ''))
+      return FileText;
     return File;
   };
 
@@ -78,9 +100,9 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
     e.preventDefault();
     if (!selectedFile) {
       toast({
-        title: "File Required",
-        description: "Please select a file to upload.",
-        variant: "destructive",
+        title: 'File Required',
+        description: 'Please select a file to upload.',
+        variant: 'destructive',
       });
       return;
     }
@@ -88,7 +110,8 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
     setIsLoading(true);
     setUploadProgress(0);
 
-    uploadResourceMutation.mutate({
+    uploadResourceMutation.mutate(
+      {
         file: selectedFile,
         title: formData.title,
         description: formData.description,
@@ -96,58 +119,60 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
         category_id: formData.category,
         format: selectedFormat,
         size: String(selectedFile.size),
-        type: types.find(t => t.id === formData.type)?.name || "document",
+        type: types.find((t) => t.id === formData.type)?.name || 'document',
         tags: tags,
         folder: formData.type,
-      }, {
-      onSuccess: (newResource) => {
-        toast({
-          title: "Resource Uploaded Successfully",
-          description: `Resource has been uploaded and is now available.`,
-        });
-        onOpenChange(false);
-        resetForm();
       },
-      onError: (err) => {
-        console.log(err);
-        toast({
-          title: "Upload Failed",
-          description: "Failed to upload resource. Please try again.",
-          variant: "destructive",
-        });
-      },
-      onSettled: () => {
-        setIsLoading(false);
-        setUploadProgress(0);
+      {
+        onSuccess: (newResource) => {
+          toast({
+            title: 'Resource Uploaded Successfully',
+            description: 'Resource has been uploaded and is now available.',
+          });
+          onOpenChange(false);
+          resetForm();
+        },
+        onError: (err) => {
+          console.log(err);
+          toast({
+            title: 'Upload Failed',
+            description: 'Failed to upload resource. Please try again.',
+            variant: 'destructive',
+          });
+        },
+        onSettled: () => {
+          setIsLoading(false);
+          setUploadProgress(0);
+        },
       }
-    });
+    );
   };
 
   const addTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
       setTags([...tags, newTag.trim()]);
-      setNewTag("");
+      setNewTag('');
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
   const resetForm = () => {
     setFormData({
-      title: "",
-      description: "",
-      category: "",
-      type: "",
-      visibility: "public",
-      permissions: "all"
+      title: '',
+      description: '',
+      category: '',
+      type: '',
+      visibility: 'public',
+      permissions: 'all',
     });
     setTags([]);
-    setNewTag("");
+    setNewTag('');
     setSelectedFile(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
@@ -159,7 +184,8 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
         <DialogHeader>
           <DialogTitle>Upload Resource</DialogTitle>
           <DialogDescription>
-            Share a document, video, or training material with the volunteer community.
+            Share a document, video, or training material with the volunteer
+            community.
           </DialogDescription>
         </DialogHeader>
 
@@ -168,7 +194,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>File Upload *</Label>
-              <div 
+              <div
                 className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-smooth"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -176,14 +202,19 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
                   <div className="space-y-2">
                     <FileIcon className="h-12 w-12 text-primary mx-auto" />
                     <p className="font-medium">{selectedFile.name}</p>
-                    <p className="text-sm text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatFileSize(selectedFile.size)}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <Upload className="h-12 w-12 text-muted-foreground mx-auto" />
-                    <p className="text-lg font-medium">Click to upload a file</p>
+                    <p className="text-lg font-medium">
+                      Click to upload a file
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      Supports PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, MP4, AVI, MOV
+                      Supports PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, MP4, AVI,
+                      MOV
                     </p>
                   </div>
                 )}
@@ -211,13 +242,15 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
           {/* Resource Details */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Resource Details</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="Enter resource title..."
                 required
               />
@@ -228,7 +261,9 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Describe what this resource contains and how it helps volunteers..."
                 rows={3}
                 required
@@ -238,30 +273,42 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, category: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((t) => (
                       <SelectItem key={t.name} value={t.id}>
-                        {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
+                        {t.name.charAt(0).toUpperCase() +
+                          t.name.slice(1).toLowerCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="type">Resource Type</Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, type: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     {types.map((t) => (
                       <SelectItem key={t.name} value={t.id}>
-                        {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
+                        {t.name.charAt(0).toUpperCase() +
+                          t.name.slice(1).toLowerCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -273,7 +320,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
           {/* Tags */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Tags & Permissions</h3>
-            
+
             <div className="space-y-2">
               <Label>Tags</Label>
               <div className="flex space-x-2">
@@ -281,7 +328,9 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   placeholder="Add tags..."
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  onKeyPress={(e) =>
+                    e.key === 'Enter' && (e.preventDefault(), addTag())
+                  }
                 />
                 <Button type="button" onClick={addTag} variant="outline">
                   <Plus className="h-4 w-4" />
@@ -290,7 +339,11 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
               {tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="flex items-center space-x-1">
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="flex items-center space-x-1"
+                    >
                       <span>{tag}</span>
                       <button
                         type="button"
@@ -308,7 +361,12 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="visibility">Visibility</Label>
-                <Select value={formData.visibility} onValueChange={(value) => setFormData({...formData, visibility: value})}>
+                <Select
+                  value={formData.visibility}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, visibility: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -319,17 +377,26 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="permissions">Download Permissions</Label>
-                <Select value={formData.permissions} onValueChange={(value) => setFormData({...formData, permissions: value})}>
+                <Select
+                  value={formData.permissions}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, permissions: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Users</SelectItem>
-                    <SelectItem value="registered">Registered Volunteers</SelectItem>
-                    <SelectItem value="approved">Approved Volunteers</SelectItem>
+                    <SelectItem value="registered">
+                      Registered Volunteers
+                    </SelectItem>
+                    <SelectItem value="approved">
+                      Approved Volunteers
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -337,11 +404,19 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !selectedFile} className="bg-gradient-primary">
-              {isLoading ? "Uploading..." : "Upload Resource"}
+            <Button
+              type="submit"
+              disabled={isLoading || !selectedFile}
+              className="bg-gradient-primary"
+            >
+              {isLoading ? 'Uploading...' : 'Upload Resource'}
             </Button>
           </DialogFooter>
         </form>
