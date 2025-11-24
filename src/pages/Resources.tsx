@@ -17,6 +17,8 @@ import { Resource } from "@/types/resource";
 import useDownloadResource from "@/hooks/resource/useDownloadResource";
 import { useDeleteResource } from "@/hooks/resource/useDeleteResource";
 import { useAuth } from "@/contexts/AuthContext";
+import { useConfirmDialog } from "@/hooks/common/useConfirmDialog";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 const Resources = () => {
   const { toast } = useToast();
@@ -28,10 +30,10 @@ const Resources = () => {
   const { data: resources = [] } = useResource();
   const [_, setResources] = useState<Resource[]>(resources);
   const { mutate: download, isPending } = useDownloadResource();
+  const confirmDialog = useConfirmDialog();
   const deleteResource = useDeleteResource();
   const { user } = useAuth();
 
-  // Contamos cuántos recursos hay de cada tipo
   const counts = resources.reduce<Record<string, number>>((acc, r) => {
     acc[r.resource_type_id] = (acc[r.resource_type_id] || 0) + 1;
     return acc;
@@ -63,30 +65,37 @@ const Resources = () => {
   };
 
   const handleDeleteResource = async (resource: Resource) => {
-    try {
-      if(resource){
-        if(resource.user_id !== user?.id){
-          toast({
-            title: "Unauthorized",
-            description: "You do not have permission to delete this resource.",
-            variant: "destructive"
-          });
-          return;
-        }
-        await deleteResource.mutateAsync(resource.id);
-        toast({
-          title: "Resource Deleted",
-          description: "Resource has been removed."
+      if(resource) {
+        confirmDialog.showDialog({
+          title: 'Delete Resource',
+          description: `Are you sure you want to delete "${resource.filename}"? This action cannot be undone.`,
+          confirmText: 'Delete',
+          variant: 'destructive',
+          onConfirm: async () => {
+            if(resource.user_id !== user?.id){
+              toast({
+                title: "Unauthorized",
+                description: "You do not have permission to delete this resource.",
+                variant: "destructive"
+              });
+              return;
+            }
+            try{
+              await deleteResource.mutateAsync(resource.id);
+              toast({
+                title: "Resource Deleted",
+                description: "Resource has been removed."
+              });
+            }catch (error) {
+              toast({
+                title: "Error",
+                description: "Failed to delete resource. Please try again.",
+                variant: "destructive"
+              });
+            }
+          },
         });
       }
-      
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete resource. Please try again.",
-        variant: "destructive"
-      });
-    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -507,6 +516,17 @@ const Resources = () => {
         onUpload={handleUploadResource}
         categories={categories}   // ← pasas los datos
         types={types}
+      />
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={confirmDialog.hideDialog}
+        onConfirm={confirmDialog.handleConfirm}
+        isLoading={confirmDialog.isConfirming}
+        title={confirmDialog.data?.title ?? ''}
+        description={confirmDialog.data?.description ?? ''}
+        confirmText={confirmDialog.data?.confirmText}
+        cancelText={confirmDialog.data?.cancelText}
+        variant={confirmDialog.data?.variant}
       />
     </div>
   );
