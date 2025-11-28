@@ -159,6 +159,10 @@ export const useVolunteersPage = () => {
     viewProfileModal.openModal(volunteer);
   };
 
+  const handleEditVolunteerProfile = (volunteer: User) => {
+    addVolunteerModal.openModal(volunteer, true);
+  };
+
   const handleManageActivities = (volunteer: User) => {
     activityModal.openModal(volunteer);
     setSearchActivity('');
@@ -312,6 +316,7 @@ export const useVolunteersPage = () => {
     handleDeleteVolunteer,
     handleContactVolunteer,
     handleViewProfile,
+    handleEditVolunteerProfile,
     handleManageActivities,
     handleAssignActivity,
     handleRemoveActivity,
