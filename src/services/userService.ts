@@ -71,3 +71,13 @@ export const updateUser = async (
     ((raw as Record<string, unknown>)['created_at'] as string | undefined);
   return updated;
 };
+
+export const toggleUserStatus = async (id: string): Promise<User> => {
+  const response = await api.patch(`${ENDPOINTS.USERS}/${id}/toggle-status`);
+  const raw = response.data?.user ?? response.data;
+  const toggled = camelizeKeys<User>(raw);
+  toggled.createdAt =
+    toggled.createdAt ??
+    ((raw as Record<string, unknown>)['created_at'] as string | undefined);
+  return toggled;
+};

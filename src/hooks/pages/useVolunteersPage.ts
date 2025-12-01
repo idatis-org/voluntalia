@@ -5,6 +5,7 @@ import {
   useAssignActivity,
   useUnassignActivity,
 } from '@/hooks/activity/useAssignActivity';
+import { useToggleUserStatus } from '@/hooks/user/useToggleUserStatus';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchAndFilter } from '@/hooks/common/useSearchAndFilter';
 import { useModal } from '@/hooks/common/useModal';
@@ -20,6 +21,7 @@ export const useVolunteersPage = () => {
   const [hoursRange, setHoursRange] = useState('all');
   const [eventsRange, setEventsRange] = useState('all');
   const [joinDateFilter, setJoinDateFilter] = useState('all');
+  const [volunteerToToggle, setVolunteerToToggle] = useState<User | null>(null);
 
   // Data fetching
   const { data: users = [], isLoading, error } = useUsers();
@@ -28,6 +30,7 @@ export const useVolunteersPage = () => {
   // Mutations
   const assignActivityMutation = useAssignActivity();
   const unassignActivityMutation = useUnassignActivity();
+  const toggleUserStatusMutation = useToggleUserStatus();
 
   // Search and filter functionality
   const {
@@ -54,8 +57,8 @@ export const useVolunteersPage = () => {
     return filteredVolunteers.filter((volunteer) => {
       const matchesStatus =
         filters.main === 'all' ||
-        (filters.main === 'active' && volunteer.role !== 'inactive') ||
-        (filters.main === 'inactive' && volunteer.role === 'inactive');
+        (filters.main === 'active' && volunteer.isActive === true) ||
+        (filters.main === 'inactive' && volunteer.isActive === false);
 
       const matchesSkill =
         skillFilter === 'all' ||
@@ -114,7 +117,7 @@ export const useVolunteersPage = () => {
       label: 'Active Volunteers',
       icon: Award,
       calculate: (data: User[]) =>
-        data.filter((u) => u.role !== 'inactive').length,
+        data.filter((u) => u.isActive === true).length,
       color: 'text-soft-green',
     },
     {
@@ -137,11 +140,38 @@ export const useVolunteersPage = () => {
 
   // Handlers
   const handleDeleteVolunteer = (volunteerId: string) => {
-    toast({
-      title: 'Volunteer Removed',
-      description:
-        'The volunteer has been successfully removed from the database.',
-    });
+    const volunteer = users.find((u) => u.id === volunteerId);
+    if (volunteer) {
+      setVolunteerToToggle(volunteer);
+    }
+  };
+
+  const confirmToggleVolunteerStatus = async () => {
+    if (!volunteerToToggle) return;
+
+    const action = volunteerToToggle.isActive ? 'deactivated' : 'activated';
+    const actionCapitalized = volunteerToToggle.isActive
+      ? 'Deactivated'
+      : 'Activated';
+
+    try {
+      await toggleUserStatusMutation.mutateAsync(volunteerToToggle.id);
+      toast({
+        title: `Volunteer ${actionCapitalized}`,
+        description: `${volunteerToToggle.name} has been successfully ${action}.`,
+      });
+      setVolunteerToToggle(null);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to ${action.slice(0, -1)} volunteer. Please try again.`,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const cancelToggleVolunteerStatus = () => {
+    setVolunteerToToggle(null);
   };
 
   const handleContactVolunteer = (
@@ -311,6 +341,12 @@ export const useVolunteersPage = () => {
     addVolunteerModal,
     viewProfileModal,
     activityModal,
+
+    // Toggle status confirmation
+    volunteerToToggle,
+    confirmToggleVolunteerStatus,
+    cancelToggleVolunteerStatus,
+    isTogglingStatus: toggleUserStatusMutation.isPending,
 
     // Handlers
     handleDeleteVolunteer,

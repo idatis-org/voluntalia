@@ -8,6 +8,7 @@ export interface User {
   country: string;
   city: string;
   role?: string;
+  isActive: boolean;
   volunteerActivities?: ActivityTask[] | null;
   totalWorkHours?: number | null;
   createdAt: string;

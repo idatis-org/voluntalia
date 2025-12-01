@@ -6,6 +6,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -21,9 +22,11 @@ import {
   Mail,
   Phone,
   Activity,
+  CheckCircle,
 } from 'lucide-react';
 import { User } from '@/types/user';
 import formatDate from '@/lib/formatDate';
+import { cn } from '@/lib/utils';
 
 interface VolunteerCardProps {
   volunteer: User;
@@ -57,7 +60,20 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
           </Avatar>
           <div className="flex-1">
             <CardTitle className="text-lg">{volunteer.name}</CardTitle>
-            <CardDescription>{volunteer.email}</CardDescription>
+            <CardDescription className="flex items-center gap-2">
+              {volunteer.email}
+            </CardDescription>
+            <Badge
+              variant="secondary"
+              className={cn(
+                'mt-1',
+                volunteer.isActive
+                  ? 'bg-soft-green/10 text-soft-green border-soft-green/20'
+                  : 'bg-destructive/10 text-destructive border-destructive/20'
+              )}
+            >
+              {volunteer.isActive ? 'Active' : 'Inactive'}
+            </Badge>
           </div>
           <div className="flex items-center space-x-2">
             <DropdownMenu>
@@ -84,10 +100,23 @@ export const VolunteerCard: React.FC<VolunteerCardProps> = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onDelete(volunteer.id)}
-                  className="text-destructive focus:text-destructive"
+                  className={cn(
+                    volunteer.isActive
+                      ? 'text-destructive focus:text-destructive'
+                      : 'text-soft-green focus:text-soft-green'
+                  )}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Remove
+                  {volunteer.isActive ? (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Deactivate
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Activate
+                    </>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

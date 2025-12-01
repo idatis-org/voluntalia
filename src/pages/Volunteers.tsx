@@ -18,6 +18,7 @@ import { SearchFilterBar } from '@/components/common/SearchFilterBar';
 import { VolunteerCard } from '@/components/volunteers/VolunteerCard';
 import { ActivityManagementModal } from '@/components/volunteers/ActivityManagementModal';
 import { AdvancedFilters } from '@/components/volunteers/AdvancedFilters';
+import { ConfirmDeactivateDialog } from '@/components/common/ConfirmDeactivateDialog';
 import { useVolunteersPage } from '@/hooks/pages/useVolunteersPage';
 
 const Volunteers: React.FC = () => {
@@ -62,6 +63,12 @@ const Volunteers: React.FC = () => {
     addVolunteerModal,
     viewProfileModal,
     activityModal,
+
+    // Toggle status confirmation
+    volunteerToToggle,
+    confirmToggleVolunteerStatus,
+    cancelToggleVolunteerStatus,
+    isTogglingStatus,
 
     // Handlers
     handleDeleteVolunteer,
@@ -276,6 +283,15 @@ const Volunteers: React.FC = () => {
         onSearchActivityChange={setSearchActivity}
         onAssignActivity={handleAssignActivity}
         onRemoveActivity={handleRemoveActivity}
+      />
+
+      <ConfirmDeactivateDialog
+        open={!!volunteerToToggle}
+        volunteerName={volunteerToToggle?.name || ''}
+        isActive={volunteerToToggle?.isActive ?? true}
+        onConfirm={confirmToggleVolunteerStatus}
+        onCancel={cancelToggleVolunteerStatus}
+        isLoading={isTogglingStatus}
       />
     </PageLayout>
   );
