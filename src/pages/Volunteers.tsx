@@ -1,17 +1,25 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Filter, Users } from "lucide-react";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import AddVolunteerModal from "@/components/modals/AddVolunteerModal";
-import ViewProfileModal from "@/components/modals/ViewProfileModal";
-import { Spinner } from "@/components/Spinner";
-import { PageLayout } from "@/components/common/PageLayout";
-import { StatsGrid } from "@/components/common/StatsGrid";
-import { SearchFilterBar } from "@/components/common/SearchFilterBar";
-import { VolunteerCard } from "@/components/volunteers/VolunteerCard";
-import { ActivityManagementModal } from "@/components/volunteers/ActivityManagementModal";
-import { AdvancedFilters } from "@/components/volunteers/AdvancedFilters";
-import { useVolunteersPage } from "@/hooks/pages/useVolunteersPage";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Filter, Users } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import AddVolunteerModal from '@/components/modals/AddVolunteerModal';
+import ViewProfileModal from '@/components/modals/ViewProfileModal';
+import { Spinner } from '@/components/Spinner';
+import { PageLayout } from '@/components/common/PageLayout';
+import { StatsGrid } from '@/components/common/StatsGrid';
+import { SearchFilterBar } from '@/components/common/SearchFilterBar';
+import { VolunteerCard } from '@/components/volunteers/VolunteerCard';
+import { ActivityManagementModal } from '@/components/volunteers/ActivityManagementModal';
+import { AdvancedFilters } from '@/components/volunteers/AdvancedFilters';
+import { ConfirmDeactivateDialog } from '@/components/common/ConfirmDeactivateDialog';
+import { useVolunteersPage } from '@/hooks/pages/useVolunteersPage';
 
 const Volunteers: React.FC = () => {
   const {
@@ -21,14 +29,14 @@ const Volunteers: React.FC = () => {
     isLoading,
     error,
     stats,
-    
+
     // Pagination
     totalItems,
     totalPages,
     currentPage,
     startIndex,
     setCurrentPage,
-    
+
     // Search and filters
     searchTerm,
     setSearchTerm,
@@ -46,19 +54,26 @@ const Volunteers: React.FC = () => {
     setShowAdvancedFilters,
     clearAllFilters,
     hasActiveFilters,
-    
+
     // Activity search
     searchActivity,
     setSearchActivity,
-    
+
     // Modals
     addVolunteerModal,
     viewProfileModal,
     activityModal,
-    
+
+    // Toggle status confirmation
+    volunteerToToggle,
+    confirmToggleVolunteerStatus,
+    cancelToggleVolunteerStatus,
+    isTogglingStatus,
+
     // Handlers
     handleDeleteVolunteer,
     handleContactVolunteer,
+    handleEditVolunteerProfile,
     handleViewProfile,
     handleManageActivities,
     handleAssignActivity,
@@ -74,13 +89,13 @@ const Volunteers: React.FC = () => {
   }
 
   if (error) {
-    return <p style={{ color: "red" }}>Error loading volunteers</p>;
+    return <p style={{ color: 'red' }}>Error loading volunteers</p>;
   }
 
   const filterOptions = [
-    { value: "all", label: "All Status" },
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" }
+    { value: 'all', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
   ];
 
   return (
@@ -103,14 +118,14 @@ const Volunteers: React.FC = () => {
         className="mb-6"
         actions={
           <div className="flex gap-2">
-            <Button 
+            <Button
               variant="outline"
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             >
               <Filter className="h-4 w-4 mr-2" />
               Advanced Filters
             </Button>
-            <Button 
+            <Button
               onClick={() => addVolunteerModal.openModal()}
               className="bg-gradient-primary hover:shadow-hover transition-smooth"
             >
@@ -141,13 +156,12 @@ const Volunteers: React.FC = () => {
 
       {/* Filter Summary */}
       <div className="flex items-center justify-between text-sm text-muted-foreground mb-6">
-        <span>Showing {startIndex + 1}-{Math.min(startIndex + 6, totalItems)} of {totalItems} volunteers</span>
+        <span>
+          Showing {startIndex + 1}-{Math.min(startIndex + 6, totalItems)} of{' '}
+          {totalItems} volunteers
+        </span>
         {hasActiveFilters() && (
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={clearAllFilters}
-          >
+          <Button variant="ghost" size="sm" onClick={clearAllFilters}>
             Clear Filters
           </Button>
         )}
@@ -160,6 +174,7 @@ const Volunteers: React.FC = () => {
             key={volunteer.id}
             volunteer={volunteer}
             onViewProfile={handleViewProfile}
+            onEditVolunteerProfile={handleEditVolunteerProfile}
             onManageActivities={handleManageActivities}
             onContact={handleContactVolunteer}
             onDelete={handleDeleteVolunteer}
@@ -173,49 +188,58 @@ const Volunteers: React.FC = () => {
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious 
+                <PaginationPrevious
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
                     if (currentPage > 1) setCurrentPage(currentPage - 1);
                   }}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  className={
+                    currentPage === 1 ? 'pointer-events-none opacity-50' : ''
+                  }
                 />
               </PaginationItem>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                // Show first page, last page, current page, and pages around current
-                const shouldShow = 
-                  page === 1 || 
-                  page === totalPages || 
-                  (page >= currentPage - 1 && page <= currentPage + 1);
-                
-                if (!shouldShow) return null;
-                
-                return (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentPage(page);
-                      }}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              })}
-              
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => {
+                  // Show first page, last page, current page, and pages around current
+                  const shouldShow =
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1);
+
+                  if (!shouldShow) return null;
+
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCurrentPage(page);
+                        }}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+              )}
+
               <PaginationItem>
-                <PaginationNext 
+                <PaginationNext
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                    if (currentPage < totalPages)
+                      setCurrentPage(currentPage + 1);
                   }}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  className={
+                    currentPage === totalPages
+                      ? 'pointer-events-none opacity-50'
+                      : ''
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -229,14 +253,18 @@ const Volunteers: React.FC = () => {
           <CardContent className="p-8 text-center">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-lg font-medium mb-2">No volunteers found</p>
-            <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+            <p className="text-muted-foreground">
+              Try adjusting your search or filter criteria
+            </p>
           </CardContent>
         </Card>
       )}
 
       {/* Modals */}
-      <AddVolunteerModal 
+      <AddVolunteerModal
         open={addVolunteerModal.isOpen}
+        isEdit={addVolunteerModal.isEdit}
+        volunteer={addVolunteerModal.data}
         onOpenChange={addVolunteerModal.closeModal}
       />
 
@@ -255,6 +283,15 @@ const Volunteers: React.FC = () => {
         onSearchActivityChange={setSearchActivity}
         onAssignActivity={handleAssignActivity}
         onRemoveActivity={handleRemoveActivity}
+      />
+
+      <ConfirmDeactivateDialog
+        open={!!volunteerToToggle}
+        volunteerName={volunteerToToggle?.name || ''}
+        isActive={volunteerToToggle?.isActive ?? true}
+        onConfirm={confirmToggleVolunteerStatus}
+        onCancel={cancelToggleVolunteerStatus}
+        isLoading={isTogglingStatus}
       />
     </PageLayout>
   );
