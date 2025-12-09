@@ -11,6 +11,9 @@ RUN npm install
 # Copiamos el resto del código
 COPY . .
 
+# Establecer NODE_ENV para la build
+ENV NODE_ENV=production
+
 # Generamos la build de producción
 RUN npm run build
 
