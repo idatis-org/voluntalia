@@ -35,9 +35,18 @@ export const getProjectById = async (id: string): Promise<Project> => {
 export const createProject = async (
   data: CreateProjectDTO
 ): Promise<Project> => {
-  const payload = snakeifyKeys(data);
+  // Limpiar campos vacíos - no enviar strings vacíos para fechas
+  const cleanData = {
+    name: data.name,
+    manager_id: data.manager_id,
+    description: data.description || undefined,
+    start_date: data.start_date || undefined,
+    end_date: data.end_date || undefined,
+  };
+  
+  const payload = snakeifyKeys(cleanData);
   const response = await api.post<ProjectResponse>(
-    ENDPOINTS.PROJECTS,
+    `${ENDPOINTS.PROJECTS}/create`,
     payload
   );
   const raw = response.data?.project ?? response.data;
@@ -51,7 +60,12 @@ export const updateProject = async (
   id: string,
   data: UpdateProjectDTO
 ): Promise<Project> => {
-  const payload = snakeifyKeys(data);
+  // Limpiar campos vacíos
+  const cleanData = Object.fromEntries(
+    Object.entries(data).filter(([, value]) => value !== '' && value !== undefined)
+  );
+  
+  const payload = snakeifyKeys(cleanData);
   const response = await api.put<ProjectResponse>(
     `${ENDPOINTS.PROJECTS}/${id}`,
     payload

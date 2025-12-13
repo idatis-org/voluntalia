@@ -35,6 +35,7 @@ export interface ProjectWithRelations extends Project {
  */
 export interface CreateProjectDTO {
   name: string; // Requerido
+  manager_id: string; // Requerido - User ID del manager
   description?: string;
   start_date?: string; // YYYY-MM-DD
   end_date?: string; // YYYY-MM-DD

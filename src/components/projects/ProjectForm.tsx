@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Project, CreateProjectDTO } from '@/types/project';
 import { useCreateProject } from '@/hooks/project/useCreateProject';
 import { useUpdateProject } from '@/hooks/project/useUpdateProject';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -29,8 +30,10 @@ export const ProjectForm = ({
   project,
   onOpenChange,
 }: ProjectFormProps) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState<CreateProjectDTO>({
     name: '',
+    manager_id: user?.id || '',
     description: '',
     start_date: '',
     end_date: '',
@@ -49,6 +52,7 @@ export const ProjectForm = ({
     if (project) {
       setFormData({
         name: project.name,
+        manager_id: project.manager_id,
         description: project.description || '',
         start_date: project.start_date || '',
         end_date: project.end_date || '',
@@ -56,13 +60,14 @@ export const ProjectForm = ({
     } else {
       setFormData({
         name: '',
+        manager_id: user?.id || '',
         description: '',
         start_date: '',
         end_date: '',
       });
     }
     setErrors({});
-  }, [project, open]);
+  }, [project, open, user?.id]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
