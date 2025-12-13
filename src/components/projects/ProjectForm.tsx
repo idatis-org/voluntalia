@@ -33,10 +33,10 @@ export const ProjectForm = ({
   const { user } = useAuth();
   const [formData, setFormData] = useState<CreateProjectDTO>({
     name: '',
-    manager_id: user?.id || '',
+    managerId: user?.id || '',
     description: '',
-    start_date: '',
-    end_date: '',
+    startDate: '',
+    endDate: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,21 +49,32 @@ export const ProjectForm = ({
 
   // Rellenar form cuando project cambia
   useEffect(() => {
-    if (project) {
+    if (project && open) {
+      // Procesar fechas: si vienen con timestamp, extraer solo YYYY-MM-DD, si son null usar ''
+      const formatDate = (dateStr: string | null | undefined): string => {
+        if (!dateStr) return '';
+        // Si viene como ISO string con T, extraer parte de fecha
+        if (typeof dateStr === 'string' && dateStr.includes('T')) {
+          return dateStr.split('T')[0];
+        }
+        // Si ya es YYYY-MM-DD
+        return dateStr;
+      };
+
       setFormData({
         name: project.name,
-        manager_id: project.manager_id,
+        managerId: project.managerId,
         description: project.description || '',
-        start_date: project.start_date || '',
-        end_date: project.end_date || '',
+        startDate: formatDate(project.startDate),
+        endDate: formatDate(project.endDate),
       });
-    } else {
+    } else if (!project && open) {
       setFormData({
         name: '',
-        manager_id: user?.id || '',
+        managerId: user?.id || '',
         description: '',
-        start_date: '',
-        end_date: '',
+        startDate: '',
+        endDate: '',
       });
     }
     setErrors({});
@@ -76,8 +87,8 @@ export const ProjectForm = ({
       newErrors.name = 'El nombre del proyecto es requerido';
     }
 
-    if (formData.start_date && formData.end_date) {
-      if (new Date(formData.start_date) > new Date(formData.end_date)) {
+    if (formData.startDate && formData.endDate) {
+      if (new Date(formData.startDate) > new Date(formData.endDate)) {
         newErrors.dates = 'La fecha de inicio no puede ser posterior a la fecha de fin';
       }
     }
@@ -153,26 +164,26 @@ export const ProjectForm = ({
           {/* Fechas */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Fecha de Inicio</Label>
+              <Label htmlFor="startDate">Fecha de Inicio</Label>
               <Input
-                id="start_date"
+                id="startDate"
                 type="date"
-                value={formData.start_date || ''}
+                value={formData.startDate || ''}
                 onChange={(e) => {
-                  setFormData({ ...formData, start_date: e.target.value });
+                  setFormData({ ...formData, startDate: e.target.value });
                   if (errors.dates) setErrors({ ...errors, dates: '' });
                 }}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="end_date">Fecha de Fin</Label>
+              <Label htmlFor="endDate">Fecha de Fin</Label>
               <Input
-                id="end_date"
+                id="endDate"
                 type="date"
-                value={formData.end_date || ''}
+                value={formData.endDate || ''}
                 onChange={(e) => {
-                  setFormData({ ...formData, end_date: e.target.value });
+                  setFormData({ ...formData, endDate: e.target.value });
                   if (errors.dates) setErrors({ ...errors, dates: '' });
                 }}
               />

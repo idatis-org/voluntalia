@@ -121,7 +121,7 @@ export const Projects = () => {
                 onEdit={handleEditProject}
                 onDelete={handleDeleteProject}
                 onAddVolunteer={handleAddVolunteer}
-                isManager={isCoord || project.manager_id === user?.id}
+                isManager={isCoord || project.managerId === user?.id}
               />
             ))}
           </div>

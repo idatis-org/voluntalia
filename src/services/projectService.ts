@@ -38,10 +38,10 @@ export const createProject = async (
   // Limpiar campos vacíos - no enviar strings vacíos para fechas
   const cleanData = {
     name: data.name,
-    manager_id: data.manager_id,
+    managerId: data.managerId,
     description: data.description || undefined,
-    start_date: data.start_date || undefined,
-    end_date: data.end_date || undefined,
+    startDate: data.startDate || undefined,
+    endDate: data.endDate || undefined,
   };
   
   const payload = snakeifyKeys(cleanData);

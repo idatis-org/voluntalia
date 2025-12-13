@@ -49,21 +49,21 @@ export const ProjectCard = ({
       <CardContent className="flex-grow">
         <div className="space-y-3 text-sm">
           {/* Fechas */}
-          {project.start_date && (
+          {project.startDate && (
             <div className="flex justify-between items-center">
               <span className="font-semibold text-xs text-muted-foreground">
                 Inicio:
               </span>
-              <span>{formatDate(new Date(project.start_date))}</span>
+              <span>{formatDate(new Date(project.startDate))}</span>
             </div>
           )}
 
-          {project.end_date && (
+          {project.endDate && (
             <div className="flex justify-between items-center">
               <span className="font-semibold text-xs text-muted-foreground">
                 Fin:
               </span>
-              <span>{formatDate(new Date(project.end_date))}</span>
+              <span>{formatDate(new Date(project.endDate))}</span>
             </div>
           )}
 

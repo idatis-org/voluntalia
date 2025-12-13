@@ -8,10 +8,10 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
-  manager_id: string;
-  created_by: string;
-  start_date?: string; // YYYY-MM-DD
-  end_date?: string; // YYYY-MM-DD
+  managerId: string;
+  createdBy: string;
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
   createdAt: string;
   updatedAt: string;
   manager?: User;
@@ -35,10 +35,10 @@ export interface ProjectWithRelations extends Project {
  */
 export interface CreateProjectDTO {
   name: string; // Requerido
-  manager_id: string; // Requerido - User ID del manager
+  managerId: string; // Requerido - User ID del manager
   description?: string;
-  start_date?: string; // YYYY-MM-DD
-  end_date?: string; // YYYY-MM-DD
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
 }
 
 /**
@@ -47,8 +47,8 @@ export interface CreateProjectDTO {
 export interface UpdateProjectDTO {
   name?: string;
   description?: string;
-  start_date?: string;
-  end_date?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 /**
@@ -56,8 +56,8 @@ export interface UpdateProjectDTO {
  */
 export interface ProjectFilters {
   search?: string;
-  manager_id?: string;
-  sortBy?: 'name' | 'createdAt' | 'start_date';
+  managerId?: string;
+  sortBy?: 'name' | 'createdAt' | 'startDate';
   sortOrder?: 'asc' | 'desc';
 }
 
