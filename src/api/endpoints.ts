@@ -8,4 +8,5 @@ export const ENDPOINTS = {
   WORKLOG: '/worklog',
   SKILLS: '/skill',
   STATS: 'dashboard/stats',
+  PROJECTS: '/projects',
 };
