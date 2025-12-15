@@ -36,6 +36,14 @@ export const useFormData = <T extends Record<string, any>>({
     setErrors({});
   }, [initialValues]);
 
+  const setFieldError = useCallback((field: keyof T | string, message: string) => {
+    setErrors(prev => ({ ...prev, [field as string]: message }));
+  }, []);
+
+  const setErrorsFn = useCallback((newErrors: Record<string, string>) => {
+    setErrors(newErrors);
+  }, []);
+
   const validateForm = useCallback(() => {
     if (!validate) return true;
     
@@ -72,6 +80,8 @@ export const useFormData = <T extends Record<string, any>>({
     updateFormData,
     resetForm,
     validateForm,
-    handleSubmit
+    handleSubmit,
+    setFieldError,
+    setErrors: setErrorsFn,
   };
 };
