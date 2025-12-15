@@ -1,39 +1,39 @@
 import { useAuth } from '@/contexts/AuthContext';
-import { useProjectsPage } from '@/hooks/pages/useProjectsPage';
+import { useProjects } from '@/hooks/project/useProjects';
 import { isCoordinator } from '@/config/permissions';
+import { useNavigate } from 'react-router-dom';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { ProjectForm } from '@/components/projects/ProjectForm';
-import { AddVolunteerModal } from '@/components/projects/AddVolunteerModal';
-import { ConfirmDeleteProject } from '@/components/projects/ConfirmDeleteProject';
 import { PageLayout } from '@/components/common/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, FolderOpen } from 'lucide-react';
 import { Spinner } from '@/components/Spinner';
+import { useState, useMemo } from 'react';
 
 /**
  * Página principal de Proyectos
- * Gestión CRUD de proyectos, voluntarios y visualización
+ * Listado simplificado de proyectos con navegación a detalles
  */
 export const Projects = () => {
   const { user } = useAuth();
-  const {
-    filteredProjects,
-    isLoading,
-    searchTerm,
-    setSearchTerm,
-    projectFormModal,
-    confirmDeleteModal,
-    addVolunteerModal,
-    handleCreateProject,
-    handleEditProject,
-    handleDeleteProject,
-    handleConfirmDelete,
-    handleAddVolunteer,
-    isDeleting,
-  } = useProjectsPage();
+  const navigate = useNavigate();
+  const { data: projects = [], isLoading } = useProjects();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const isCoord = isCoordinator(user?.role);
+
+  // Filtrar proyectos por búsqueda
+  const filteredProjects = useMemo(() => {
+    if (!searchTerm) return projects;
+    const term = searchTerm.toLowerCase();
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(term) ||
+        p.description?.toLowerCase().includes(term)
+    );
+  }, [projects, searchTerm]);
 
   // Estado de carga
   if (isLoading) {
@@ -69,7 +69,7 @@ export const Projects = () => {
 
           {isCoord && (
             <Button
-              onClick={handleCreateProject}
+              onClick={() => setShowCreateModal(true)}
               size="lg"
               className="w-full sm:w-auto"
             >
@@ -106,7 +106,7 @@ export const Projects = () => {
                   : 'Los coordinadores pueden crear proyectos aquí'}
             </p>
             {!searchTerm && isCoord && (
-              <Button onClick={handleCreateProject}>
+              <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Crear Primer Proyecto
               </Button>
@@ -115,46 +115,17 @@ export const Projects = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onEdit={handleEditProject}
-                onDelete={handleDeleteProject}
-                onAddVolunteer={handleAddVolunteer}
-                isManager={isCoord || project.managerId === user?.id}
-              />
+              <ProjectCard key={project.id} project={project} />
             ))}
           </div>
         )}
       </div>
 
-      {/* Modales */}
+      {/* Modal crear proyecto */}
       <ProjectForm
-        open={projectFormModal.isOpen}
-        project={projectFormModal.data}
-        onOpenChange={(open) => {
-          if (!open) {
-            projectFormModal.closeModal();
-          }
-        }}
-      />
-
-      <AddVolunteerModal
-        open={addVolunteerModal.isOpen}
-        project={addVolunteerModal.data}
-        onOpenChange={(open) => {
-          if (!open) {
-            addVolunteerModal.closeModal();
-          }
-        }}
-      />
-
-      <ConfirmDeleteProject
-        open={confirmDeleteModal.isOpen}
-        project={confirmDeleteModal.data}
-        isLoading={isDeleting}
-        onConfirm={handleConfirmDelete}
-        onCancel={confirmDeleteModal.closeModal}
+        open={showCreateModal}
+        project={null}
+        onOpenChange={setShowCreateModal}
       />
     </PageLayout>
   );

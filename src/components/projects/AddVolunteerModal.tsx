@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import type { Project } from '@/types/project';
 import { useUsers } from '@/hooks/user/useUsers';
 import { useAddVolunteerToProject } from '@/hooks/project/useAddVolunteerToProject';
@@ -34,6 +34,7 @@ export const AddVolunteerModal = ({
 }: AddVolunteerModalProps) => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const pendingCount = useRef(0);
 
   const { data: users = [], isLoading: usersLoading } = useUsers();
   const { mutate: addVolunteer, isPending } = useAddVolunteerToProject();
@@ -58,11 +59,22 @@ export const AddVolunteerModal = ({
   const handleAddVolunteer = (userId: string) => {
     if (!project) return;
 
+    pendingCount.current += 1;
+
     addVolunteer(
       { projectId: project.id, userId },
       {
         onSuccess: () => {
+          pendingCount.current -= 1;
           setSelectedUsers((prev) => prev.filter((id) => id !== userId));
+          
+          // Si no hay más pendientes, cerrar modal
+          if (pendingCount.current === 0) {
+            onOpenChange(false);
+          }
+        },
+        onError: () => {
+          pendingCount.current -= 1;
         },
       }
     );
@@ -71,11 +83,23 @@ export const AddVolunteerModal = ({
   const handleSubmit = () => {
     if (!project || selectedUsers.length === 0) return;
 
+    // Reset pending count
+    pendingCount.current = 0;
+
     // Agregar cada voluntario seleccionado
     selectedUsers.forEach((userId) => {
       handleAddVolunteer(userId);
     });
   };
+
+  // Limpiar cuando se cierra el modal
+  useEffect(() => {
+    if (!open) {
+      setSelectedUsers([]);
+      setSearchTerm('');
+      pendingCount.current = 0;
+    }
+  }, [open]);
 
   const isLoading = usersLoading || isPending;
 

@@ -14,6 +14,7 @@ import Resources from './pages/Resources';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import Projects from './pages/Projects';
+import ProjectDetails from './pages/ProjectDetails';
 import NotFound from './pages/NotFound';
 import ResetPassword from './pages/ResetPassword';
 import { AuthProvider } from './contexts/AuthContext';
@@ -72,6 +73,14 @@ const App = () => (
                               allowedRoles={ROUTE_PERMISSIONS.PROJECTS}
                             >
                               <Projects />
+                            </ProtectedRoute>
+                          }
+                        />
+                        <Route
+                          path="/projects/:id"
+                          element={
+                            <ProtectedRoute>
+                              <ProjectDetails />
                             </ProtectedRoute>
                           }
                         />

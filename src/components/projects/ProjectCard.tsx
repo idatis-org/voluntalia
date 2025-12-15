@@ -1,54 +1,60 @@
 import { Project } from '@/types/project';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
-  CardFooter,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Edit2, Users } from 'lucide-react';
 import { formatDate } from '@/lib/formatDate';
 
 interface ProjectCardProps {
   project: Project;
-  onEdit: (project: Project) => void;
-  onDelete: (project: Project) => void;
-  onAddVolunteer: (project: Project) => void;
-  isManager?: boolean; // Si el usuario actual es manager del proyecto
 }
 
 /**
- * Card individual para mostrar un proyecto
- * Muestra: nombre, descripción, fechas, manager, voluntarios
- * Acciones: editar, eliminar, agregar voluntarios
+ * Card simplificado para mostrar un proyecto
+ * Información mínima indispensable: nombre, fechas, manager
+ * Card completo clickeable navega a detalles del proyecto
  */
-export const ProjectCard = ({
-  project,
-  onEdit,
-  onDelete,
-  onAddVolunteer,
-  isManager = false,
-}: ProjectCardProps) => {
+export const ProjectCard = ({ project }: ProjectCardProps) => {
+  const navigate = useNavigate();
   const volunteerCount = project.volunteers?.length || 0;
   const activityCount = project.activities?.length || 0;
 
+  // Calcular estado general del proyecto basado en actividades
+  const getProjectStatus = () => {
+    if (!project.activities || project.activities.length === 0) {
+      return 'Sin actividades';
+    }
+    // Aquí podríamos calcular basado en actividades cuando tengamos más datos
+    return 'En progreso';
+  };
+
+  const handleCardClick = () => {
+    navigate(`/projects/${project.id}`);
+  };
+
   return (
-    <Card className="flex flex-col hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="space-y-2">
-          <CardTitle className="line-clamp-2 text-lg">{project.name}</CardTitle>
-          <CardDescription className="line-clamp-3 text-sm">
-            {project.description || 'Sin descripción'}
-          </CardDescription>
+    <Card 
+      onClick={handleCardClick}
+      className="flex flex-col hover:shadow-lg transition-shadow cursor-pointer group"
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="line-clamp-2 text-lg group-hover:text-primary transition-colors">
+            {project.name}
+          </CardTitle>
+          <Badge variant="secondary" className="shrink-0">
+            {getProjectStatus()}
+          </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="flex-grow">
         <div className="space-y-3 text-sm">
-          {/* Fechas */}
+          {/* Fecha de Inicio */}
           {project.startDate && (
             <div className="flex justify-between items-center">
               <span className="font-semibold text-xs text-muted-foreground">
@@ -58,6 +64,7 @@ export const ProjectCard = ({
             </div>
           )}
 
+          {/* Fecha de Fin */}
           {project.endDate && (
             <div className="flex justify-between items-center">
               <span className="font-semibold text-xs text-muted-foreground">
@@ -69,67 +76,27 @@ export const ProjectCard = ({
 
           {/* Manager */}
           {project.manager && (
-            <div className="flex justify-between items-center pt-1 border-t">
+            <div className="flex justify-between items-center pt-2 border-t">
               <span className="font-semibold text-xs text-muted-foreground">
                 Manager:
               </span>
-              <span className="text-sm">{project.manager.name}</span>
+              <span className="text-sm font-medium">{project.manager.name}</span>
             </div>
           )}
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-2 pt-2">
-            <div className="bg-muted p-2 rounded">
-              <p className="text-xs font-semibold text-muted-foreground">
-                Voluntarios
-              </p>
+          {/* Stats compactos */}
+          <div className="grid grid-cols-2 gap-2 pt-3">
+            <div className="bg-muted/50 p-2 rounded text-center">
+              <p className="text-xs text-muted-foreground">Voluntarios</p>
               <p className="text-lg font-bold">{volunteerCount}</p>
             </div>
-            <div className="bg-muted p-2 rounded">
-              <p className="text-xs font-semibold text-muted-foreground">
-                Actividades
-              </p>
+            <div className="bg-muted/50 p-2 rounded text-center">
+              <p className="text-xs text-muted-foreground">Actividades</p>
               <p className="text-lg font-bold">{activityCount}</p>
             </div>
           </div>
         </div>
       </CardContent>
-
-      <CardFooter className="flex flex-col gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => onAddVolunteer(project)}
-        >
-          <Users className="w-4 h-4 mr-2" />
-          Voluntarios
-        </Button>
-
-        {isManager && (
-          <div className="flex gap-2 w-full">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={() => onEdit(project)}
-            >
-              <Edit2 className="w-4 h-4 mr-1" />
-              Editar
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 text-destructive hover:text-destructive"
-              onClick={() => onDelete(project)}
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              Eliminar
-            </Button>
-          </div>
-        )}
-      </CardFooter>
     </Card>
   );
 };
