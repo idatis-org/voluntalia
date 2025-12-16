@@ -36,7 +36,45 @@ export const useSearchAndFilter = <T>({
   };
 
   const filteredData = useMemo(() => {
-    const searchLower = searchTerm.toLowerCase();
+    const searchLower = searchTerm.toLowerCase().trim();
+
+    // Simple normalization
+    const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+
+    // Levenshtein distance
+    const levenshtein = (a: string, b: string) => {
+      const m = a.length, n = b.length;
+      const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+        }
+      }
+      return dp[m][n];
+    };
+
+    // Fuzzy match: exact includes OR subsequence OR small edit distance relative to length
+    const fuzzyMatch = (text: string, pattern: string): boolean => {
+      if (!pattern) return true;
+      const t = normalize(text || '');
+      const p = normalize(pattern || '');
+      if (t.includes(p)) return true;
+
+      // subsequence check (chars in order)
+      let pi = 0;
+      for (let i = 0; i < t.length && pi < p.length; i++) {
+        if (t[i] === p[pi]) pi++;
+      }
+      if (pi === p.length) return true;
+
+      // allow small edit distance for short patterns
+      const dist = levenshtein(t, p);
+      const threshold = Math.max(1, Math.floor(p.length * 0.34));
+      return dist <= threshold;
+    };
     
     // Map status values to their display names
     const statusMap: Record<string, string> = {
@@ -90,34 +128,32 @@ export const useSearchAndFilter = <T>({
       }
 
       if (!searchTerm) return true;
-      
-      // Search logic
+
+      // Search logic with fuzzy matching
       const matchesSearch = searchFields.some(field => {
         const value = (item as any)[field];
-        
+
         if (typeof value === 'string') {
           // For date fields, search in formatted date with month names
           if (field === 'date' || field === 'createdAt' || field === 'updatedAt') {
-            return getDateSearchValue(value).toLowerCase().includes(searchLower) || 
-                   value.toLowerCase().includes(searchLower);
+            const ds = getDateSearchValue(value).toLowerCase();
+            return fuzzyMatch(ds, searchLower) || fuzzyMatch(value.toLowerCase(), searchLower);
           }
-          return value.toLowerCase().includes(searchLower);
+          return fuzzyMatch(value, searchLower);
         }
         if (typeof value === 'number') {
           return String(value).includes(searchLower);
         }
         if (Array.isArray(value)) {
-          return value.some(v => 
-            typeof v === 'string' && v.toLowerCase().includes(searchLower)
-          );
+          return value.some(v => typeof v === 'string' && fuzzyMatch(v, searchLower));
         }
         return false;
-      }) || 
+      }) ||
       // Also search in nested fields like project.name, created_by.name
       (
-        ((item as any).project?.name || '').toLowerCase().includes(searchLower) ||
-        ((item as any).createdBy?.name || '').toLowerCase().includes(searchLower) ||
-        ((item as any).created_by?.name || '').toLowerCase().includes(searchLower) ||
+        fuzzyMatch(((item as any).project?.name || ''), searchLower) ||
+        fuzzyMatch(((item as any).createdBy?.name || ''), searchLower) ||
+        fuzzyMatch(((item as any).created_by?.name || ''), searchLower) ||
         String((item as any).completed_hours || (item as any).completedHours || '').includes(searchLower) ||
         // Search by status display names (Completada, En curso, etc)
         (statusMap[(item as any).status] || '').includes(searchLower)
