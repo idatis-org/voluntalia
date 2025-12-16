@@ -23,6 +23,7 @@ import { PageLayout } from '@/components/common/PageLayout';
 import { StatsGrid } from '@/components/common/StatsGrid';
 import { SearchFilterBar } from '@/components/common/SearchFilterBar';
 import { FormModal } from '@/components/common/FormModal';
+import { CreateActivityModal } from '@/components/modals/CreateActivityModal';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useActivitiesPage } from '@/hooks/pages/useActivitiesPage';
 import { useProjects } from '@/hooks/project/useProjects';
@@ -61,6 +62,7 @@ export default function Activities() {
     isCreating,
     isUpdating,
   } = useActivitiesPage();
+
 
   const { data: projects = [] } = useProjects();
   const projectsMap = useMemo(() => {
@@ -152,7 +154,7 @@ export default function Activities() {
 
   return (
     <PageLayout title="Activities Management" description="Manage volunteer activities and tasks">
-      <StatsGrid stats={stats} columns={3} className="mb-6" />
+      <StatsGrid stats={stats} columns={5} className="mb-6" isLoading={isLoading} />
 
       <SearchFilterBar
         searchTerm={searchAndFilter.searchTerm}
@@ -241,15 +243,85 @@ export default function Activities() {
         <span>Showing {searchAndFilter.paginatedData.length > 0 ? ((searchAndFilter.currentPage - 1) * 10) + 1 : 0}-{Math.min((searchAndFilter.currentPage) * 10, searchAndFilter.totalItems)} of {searchAndFilter.totalItems} activities</span>
       </div>
 
-      <Card className="shadow-soft border-accent/20">
+      {/* Empty state when there are no activities */}
+      {!isLoading && searchAndFilter.totalItems === 0 ? (
+        <Card className="shadow-soft border-accent/20 p-6 mb-6">
+          <CardHeader>
+            <CardTitle>No activities found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">There are no activities matching your filters. You can create a new activity to get started.</p>
+              <div className="flex gap-2">
+                <Button onClick={() => createModal.openModal()} className="bg-gradient-primary">Add Activity</Button>
+                <Button variant="outline" onClick={() => searchAndFilter.resetSearch()}>Reset Filters</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="shadow-soft border-accent/20">
         <CardHeader>
           <CardTitle>Activities List</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
+            <>
+              {/* Mobile skeletons */}
+              <div className="grid gap-4 md:hidden">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Card key={`skeleton-mobile-${i}`} className="animate-pulse">
+                    <CardHeader className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-sm font-semibold bg-muted h-4 w-40 rounded" />
+                        <div className="text-xs text-muted-foreground mt-2"><span className="bg-muted h-3 w-32 rounded inline-block" /></div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="h-6 w-16 bg-muted rounded" />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-2">
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm"><span className="bg-muted h-4 w-24 rounded inline-block" /></div>
+                        <div className="text-sm"><span className="bg-muted h-4 w-12 rounded inline-block" /></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Desktop skeleton table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Date</TableHead>
+                      {(isCoordinator(user?.role) || isProjectManager(user?.role)) && <TableHead>Created By</TableHead>}
+                      <TableHead>Project</TableHead>
+                      <TableHead>Total Hours</TableHead>
+                      {isVolunteer(user?.role) && <TableHead>My Hours</TableHead>}
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={`skeleton-row-${i}`}>
+                        <TableCell><div className="h-4 bg-muted rounded w-40" /></TableCell>
+                        <TableCell className="w-32"><div className="h-4 bg-muted rounded w-20" /></TableCell>
+                        {(isCoordinator(user?.role) || isProjectManager(user?.role)) && <TableCell><div className="h-4 bg-muted rounded w-24" /></TableCell>}
+                        <TableCell><div className="h-4 bg-muted rounded w-24" /></TableCell>
+                        <TableCell className="text-center"><div className="h-4 bg-muted rounded w-12 mx-auto" /></TableCell>
+                        {isVolunteer(user?.role) && <TableCell className="text-center"><div className="h-4 bg-muted rounded w-12 mx-auto" /></TableCell>}
+                        <TableCell><div className="h-4 bg-muted rounded w-20 mx-auto" /></TableCell>
+                        <TableCell className="text-right"><div className="h-4 bg-muted rounded w-16 ml-auto" /></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           ) : (
             <>
               {/* Mobile: cards view */}
@@ -512,6 +584,7 @@ export default function Activities() {
               )}
         </CardContent>
       </Card>
+      )}
 
       {/* Pagination */}
       {searchAndFilter.totalPages > 1 && (
@@ -568,57 +641,23 @@ export default function Activities() {
         </div>
       )}
 
-      <FormModal
-        isOpen={createModal.isOpen}
-        onClose={() => {
+      <CreateActivityModal
+        open={createModal.isOpen}
+        projectId={searchAndFilter.filters?.project && searchAndFilter.filters.project !== 'all' ? searchAndFilter.filters.project : undefined}
+        projectStartDate={undefined}
+        onOpenChange={(open) => {
+          if (!open) {
+            createModal.closeModal();
+            handleModalClose();
+          } else {
+            createModal.openModal();
+          }
+        }}
+        onCreated={() => {
           createModal.closeModal();
           handleModalClose();
         }}
-        onSubmit={handleCreate}
-        title="Create New Activity"
-        submitText="Create Activity"
-        isLoading={isCreating}
-      >
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="name">Activity Name *</Label>
-            <Input id="name" ref={createNameRef} value={form.formData.name} onChange={(e) => form.updateField('name', e.target.value)} placeholder="Enter activity name" />
-            {form.errors.name && <p className="text-sm text-destructive mt-1">{form.errors.name}</p>}
-          </div>
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" value={form.formData.description} onChange={(e) => form.updateField('description', e.target.value)} placeholder="Enter activity description (optional)" rows={3} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="date">Date</Label>
-              <Input id="date" type="date" value={form.formData.date || ''} onChange={(e) => form.updateField('date', e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <select id="status" className="mt-1 block w-full rounded-md border px-2 py-1 bg-white text-gray-900 dark:bg-slate-800 dark:text-gray-100" value={form.formData.status || 'planned'} onChange={(e) => form.updateField('status', e.target.value as any)}>
-                <option value="planned">Planned</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <Label htmlFor="project">Project</Label>
-              <div className="flex flex-col">
-                <input list="projects-list" id="project" className="mt-1 block w-full rounded-md border px-2 py-1 bg-white text-gray-900 dark:bg-slate-800 dark:text-gray-100" value={projectsMap.get(form.formData.projectId || '') ?? ''} onChange={(e) => {
-                  const name = e.target.value;
-                  const found = projects.find((p: any) => p.name === name);
-                  form.updateField('projectId', found ? found.id : '');
-                }} placeholder="Type to search projects" />
-                <datalist id="projects-list">{projects.map((p: any) => <option key={p.id} value={p.name} />)}</datalist>
-              </div>
-            </div>
-          </div>
-        </div>
-      </FormModal>
+      />
 
       <FormModal
         isOpen={editModal.isOpen}
