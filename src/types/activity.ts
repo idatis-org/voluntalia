@@ -37,3 +37,19 @@ export interface Volunteer {
   email: string;
   hoursContributed?: number; // Horas que contribuyó este voluntario
 }
+
+// Activity stats returned by GET /activity/stats
+export interface ActivityStats {
+  total: number;
+  statusCounts: {
+    planned: number;
+    active: number;
+    completed: number;
+    cancelled: number;
+  };
+  upcoming7Days: number;
+  totalLoggedHours: number;
+  averageHoursPerActivity?: number;
+  uniqueVolunteers?: number;
+  filtered?: number;
+}

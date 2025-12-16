@@ -1,5 +1,5 @@
 import api from '@/api/axios';
-import { ActivityTask, Volunteer } from '@/types/activity';
+import { ActivityTask, Volunteer, ActivityStats } from '@/types/activity';
 import { camelizeKeys, snakeifyKeys } from '@/lib/caseUtils';
 
 const ENDPOINTS = {
@@ -76,4 +76,14 @@ export const getVolunteersByActivity = async (
     `${ENDPOINTS.ACTIVITIES}/${activityId}/volunteers`
   );
   return response.data.volunteers;
+};
+
+export const getActivityStats = async (params?: Record<string, any>): Promise<ActivityStats> => {
+  // params can include projectId, status, dateFrom, dateTo, search, userId, userScoped
+  const query = new URLSearchParams(params || {}).toString();
+  const url = `${ENDPOINTS.ACTIVITIES}/stats${query ? `?${query}` : ''}`;
+  const response = await api.get(url);
+  // Convert keys to camelCase to match frontend types
+  const data = camelizeKeys<ActivityStats>(response.data);
+  return data;
 };

@@ -3,3 +3,4 @@ export interface DashboardStats {
     activeActivities: number;
     hoursThisMonth: number;
 }
+
