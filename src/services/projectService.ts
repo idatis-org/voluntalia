@@ -12,21 +12,27 @@ import { camelizeKeys, snakeifyKeys } from '@/lib/caseUtils';
 /**
  * GET - Listar todos los proyectos
  */
-export const getProjects = async (): Promise<Project[]> => {
-  const response = await api.get<ProjectsResponse>(ENDPOINTS.PROJECTS);
-  const raw = response.data?.projects ?? [];
-  return camelizeKeys<Project[]>(raw);
+export const getProjects = async (params?: Record<string, unknown>): Promise<ProjectsResponse & { raw?: any }> => {
+  const response = await api.get<ProjectsResponse>(ENDPOINTS.PROJECTS, {
+    params: snakeifyKeys(params || {}),
+  });
+  const raw = response.data ?? {};
+  // camelize entire response to get projects and meta in camelCase
+  return camelizeKeys<ProjectsResponse & { raw?: any }>(raw);
 };
 
 /**
  * GET - Obtener proyecto por ID con relaciones completas
  */
 export const getProjectById = async (id: string): Promise<Project> => {
+  console.log('[projectService] getProjectById request:', id);
   const response = await api.get<ProjectResponse>(
     `${ENDPOINTS.PROJECTS}/${id}`
   );
   const raw = response.data?.project ?? response.data;
-  return camelizeKeys<Project>(raw);
+  const result = camelizeKeys<Project>(raw);
+  console.log('[projectService] getProjectById response:', result ? result.id : null);
+  return result;
 };
 
 /**
