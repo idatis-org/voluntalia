@@ -1,17 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Clock, Plus, Edit, Trash2, Award } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Clock, Plus, Edit, Trash2 } from "lucide-react";
 import { PageLayout } from "@/components/common/PageLayout";
 import { StatsGrid } from "@/components/common/StatsGrid";
 import { SearchFilterBar } from "@/components/common/SearchFilterBar";
 import { Spinner } from "@/components/Spinner";
 import { useHoursPage } from "@/hooks/pages/useHoursPage";
+import { LogHoursModal } from "@/components/modals/LogHoursModal";
 
 const Hours: React.FC = () => {
   const {
@@ -69,103 +65,25 @@ const Hours: React.FC = () => {
           filterOptions={filterOptions}
           filterPlaceholder="All Status"
           actions={
-            <Dialog open={logHoursModal.isOpen} onOpenChange={logHoursModal.toggleModal}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-primary hover:shadow-hover transition-smooth">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Log Hours
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{editingEntry ? "Edit Hours" : "Log Volunteer Hours"}</DialogTitle>
-                  <DialogDescription>
-                    {editingEntry ? "Update your hour entry" : "Record your volunteer time for approval"}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Week Start Date</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={form.formData.date}
-                      onChange={(e) => form.updateField('date', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hours">Hours Worked</Label>
-                    <Input
-                      id="hours"
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      max="168"
-                      placeholder="e.g. 4.5"
-                      value={form.formData.hours}
-                      onChange={(e) => form.updateField('hours', e.target.value)}
-                    />
-                    {form.errors.hours && (
-                      <p className="text-sm text-destructive">{form.errors.hours}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="activity">Activity (Optional)</Label>
-                    <Select
-                      value={form.formData.activity?.id ? String(form.formData.activity.id) : 'none'}
-                      onValueChange={(value) =>
-                        form.updateField('activity',
-                          value === 'none'
-                            ? null
-                            : activities.find((a) => String(a.id) === value) ?? null
-                        )
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select an activity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No specific activity</SelectItem>
-                        {activities.map((act) => (
-                          <SelectItem key={act.id} value={String(act.id)}>
-                            {act.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Describe what you did during your volunteer time..."
-                      value={form.formData.description}
-                      onChange={(e) => form.updateField('description', e.target.value)}
-                      rows={3}
-                    />
-                    {form.errors.description && (
-                      <p className="text-sm text-destructive">{form.errors.description}</p>
-                    )}
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => {
-                    logHoursModal.closeModal();
-                    handleModalClose();
-                  }}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleSubmitHours}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Logging..." : (editingEntry ? "Update Hours" : "Log Hours")}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              className="bg-gradient-primary hover:shadow-hover transition-smooth"
+              onClick={() => logHoursModal.toggleModal()}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Log Hours
+            </Button>
           }
           className="mb-6"
+        />
+
+        <LogHoursModal 
+          open={logHoursModal.isOpen}
+          onOpenChange={logHoursModal.toggleModal}
+          activities={activities}
+          editingEntry={editingEntry}
+          onSuccess={() => {
+            handleModalClose();
+          }}
         />
 
         {/* Hours Entries */}

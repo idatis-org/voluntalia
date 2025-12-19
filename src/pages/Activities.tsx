@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -16,15 +15,15 @@ import {
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/formatDate';
-import { Plus, Edit, Trash2, Loader2, Award, Filter, MoreVertical, Clock, FileText } from 'lucide-react';
+import { Edit, Trash2, MoreVertical, Clock, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PageLayout } from '@/components/common/PageLayout';
 import { StatsGrid } from '@/components/common/StatsGrid';
-import { SearchFilterBar } from '@/components/common/SearchFilterBar';
 import { FormModal } from '@/components/common/FormModal';
 import { CreateActivityModal } from '@/components/modals/CreateActivityModal';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ActivitiesToolbar, ActivitiesFilters } from '@/components/activities/ActivitiesToolbar';
 import { useActivitiesPage } from '@/hooks/pages/useActivitiesPage';
 import { useProjects } from '@/hooks/project/useProjects';
 import { ManageSkillsModal } from '@/components/modals/ManageSkillsModal';
@@ -63,8 +62,9 @@ export default function Activities() {
     isUpdating,
   } = useActivitiesPage();
 
-
-  const { data: projects = [] } = useProjects();
+  const { data } = useProjects();
+  const rawProjects = data as any;
+  const projects = Array.isArray(rawProjects) ? rawProjects : (rawProjects?.projects ?? []);
   const projectsMap = useMemo(() => {
     const m = new Map<string, string>();
     projects.forEach((p: any) => m.set(p.id, p.name));
@@ -76,9 +76,11 @@ export default function Activities() {
   const editNameRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
 
-  // Compute active filters to pass to SearchFilterBar (so Clear button counts advanced filters)
+  // Compute active filters summary for toolbar
   const activeFiltersSummary: string[] = [];
-  if (searchAndFilter.searchTerm && searchAndFilter.searchTerm.trim().length > 0) activeFiltersSummary.push(`Search: "${searchAndFilter.searchTerm.length > 20 ? searchAndFilter.searchTerm.slice(0,20) + '…' : searchAndFilter.searchTerm}"`);
+  if (searchAndFilter.searchTerm && searchAndFilter.searchTerm.trim().length > 0) {
+    activeFiltersSummary.push(`Search: "${searchAndFilter.searchTerm.length > 20 ? searchAndFilter.searchTerm.slice(0, 20) + '…' : searchAndFilter.searchTerm}"`);
+  }
   if (searchAndFilter.filters?.project && searchAndFilter.filters.project !== 'all') {
     const p = projects.find((pr: any) => pr.id === searchAndFilter.filters.project);
     activeFiltersSummary.push(p ? `Project: ${p.name}` : 'Project');
@@ -89,7 +91,6 @@ export default function Activities() {
   }
   if (searchAndFilter.filters?.dateFrom) activeFiltersSummary.push(`From: ${searchAndFilter.filters.dateFrom}`);
   if (searchAndFilter.filters?.dateTo) activeFiltersSummary.push(`To: ${searchAndFilter.filters.dateTo}`);
-  const activeFiltersCount = activeFiltersSummary.length;
 
   // Prepare sorted data for both table and mobile card view
   const sortedData = useMemo(() => {
@@ -156,87 +157,21 @@ export default function Activities() {
     <PageLayout title="Activities Management" description="Manage volunteer activities and tasks">
       <StatsGrid stats={stats} columns={5} className="mb-6" isLoading={isLoading} />
 
-      <SearchFilterBar
+      <ActivitiesToolbar
         searchTerm={searchAndFilter.searchTerm}
         onSearchChange={searchAndFilter.setSearchTerm}
-        searchPlaceholder="Search activities..."
-        onReset={() => searchAndFilter.resetSearch()}
-        activeCount={activeFiltersCount}
-        activeSummary={activeFiltersSummary}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setSkillsModalOpen(true)} className="shadow-soft">
-              <Award className="h-4 w-4 mr-2" />
-              Manage Skills
-            </Button>
-            <Button variant="outline" onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}>
-              <Filter className="h-4 w-4 mr-2" />
-              Advanced Filters
-            </Button>
-            {(isCoordinator(user?.role) || isProjectManager(user?.role)) && (
-              <Button onClick={() => createModal.openModal()} className="bg-gradient-primary hover:shadow-hover transition-smooth">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Activity
-              </Button>
-            )}
-          </div>
-        }
+        filters={searchAndFilter.filters as ActivitiesFilters}
+        onFilterChange={(key, value) => searchAndFilter.setCustomFilter(key, value)}
+        onResetFilters={() => searchAndFilter.resetSearch()}
+        projects={projects}
+        activeFilters={activeFiltersSummary}
+        onManageSkills={() => setSkillsModalOpen(true)}
+        onAddActivity={() => createModal.openModal()}
+        canAdd={isCoordinator(user?.role) || isProjectManager(user?.role)}
+        showAdvancedFilters={showAdvancedFilters}
+        onToggleAdvancedFilters={setShowAdvancedFilters}
         className="mb-6"
       />
-
-      {/* Advanced Filters Panel (hidden by default) */}
-      {showAdvancedFilters && (
-        <Card className="shadow-card mb-6">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Project</label>
-                <Select value={searchAndFilter.filters.project || 'all'} onValueChange={(v) => searchAndFilter.setCustomFilter('project', v)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="All Projects" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Projects</SelectItem>
-                    {projects.map((p: any) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <Select value={searchAndFilter.filters.status || 'all'} onValueChange={(v) => searchAndFilter.setCustomFilter('status', v)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="planned">Planificada</SelectItem>
-                    <SelectItem value="active">En curso</SelectItem>
-                    <SelectItem value="completed">Completada</SelectItem>
-                    <SelectItem value="cancelled">Cancelada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">From</label>
-                <Input type="date" className="h-10" value={searchAndFilter.filters.dateFrom || ''} onChange={(e) => searchAndFilter.setCustomFilter('dateFrom', e.target.value)} />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">To</label>
-                <Input type="date" className="h-10" value={searchAndFilter.filters.dateTo || ''} onChange={(e) => searchAndFilter.setCustomFilter('dateTo', e.target.value)} />
-              </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Button className="h-10" variant="outline" onClick={() => { searchAndFilter.resetSearch(); setShowAdvancedFilters(false); }}>Clear</Button>
-              <Button className="h-10" onClick={() => setShowAdvancedFilters(false)}>Apply</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Filter Summary */}
       <div className="flex items-center justify-between text-sm text-muted-foreground mb-6">

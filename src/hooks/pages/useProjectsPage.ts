@@ -14,7 +14,9 @@ export const useProjectsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Queries
-  const { data: projects = [], isLoading, error } = useProjects();
+  const { data, isLoading, error } = useProjects();
+  const raw = data as any;
+  const projects = Array.isArray(raw) ? raw : (raw?.projects ?? []);
 
   // Mutations
   const { mutate: deleteProjectMutation, isPending: isDeleting } =
