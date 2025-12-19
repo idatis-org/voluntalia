@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 export interface FilterOption {
   value: string;
@@ -60,6 +61,27 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   activeCount: externalActiveCount,
   activeSummary: externalActiveSummary,
 }) => {
+  // Local input state to avoid losing focus when parent re-renders
+  const [localInput, setLocalInput] = useState(searchTerm);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync local input when parent searchTerm changes (only once on mount or external reset)
+  useEffect(() => {
+    setLocalInput(searchTerm);
+  }, [searchTerm]);
+
+  const handleInputChange = (value: string) => {
+    setLocalInput(value);
+    
+    // Clear previous timer
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    
+    // Debounce: notify parent after 300ms
+    debounceTimer.current = setTimeout(() => {
+      onSearchChange(value);
+    }, 300);
+  };
+
   // Prefer externally provided active summary/count (useful when advanced filters live outside this component)
   const appliedFilters: string[] = externalActiveSummary ?? [];
   if (!externalActiveSummary) {
@@ -90,8 +112,8 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={localInput}
+              onChange={(e) => handleInputChange(e.target.value)}
               className="pl-10 h-10"
             />
           </div>
