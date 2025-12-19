@@ -5,7 +5,7 @@ import { UpdateWorkLogDTO, WorkLog } from "@/types/workLog";
 export const useUpdateWorklog = () => {
   const queryClient = useQueryClient();
   
-  return useMutation<void, Error, { id: string; data: Partial<UpdateWorkLogDTO> }>({
+  return useMutation<void, Error, { id: string; data: UpdateWorkLogDTO }>({
     mutationFn: ({ id, data }) => updateWorklog(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["worklog"] });

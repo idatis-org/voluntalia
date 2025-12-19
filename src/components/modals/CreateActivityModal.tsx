@@ -47,13 +47,15 @@ export const CreateActivityModal = ({
   const queryClient = useQueryClient();
   const createActivityMutation = useCreateActivity();
   const { user } = useAuth();
-  const { data: allProjects = [] } = useProjects();
+  const { data } = useProjects();
+  // `useProjects` may return an array (legacy) or an object { projects, meta }
+  const allProjects = Array.isArray(data) ? data : (data && typeof data === 'object' && 'projects' in data ? (data as any).projects : []);
 
   const isCoordinator = user?.role === 'COORDINATOR';
   const isProjectManager = user?.role === 'PROJECT_MANAGER';
 
   // If user is project manager, determine their managed project
-  const managerProject = allProjects.find((p: any) => p.managerId === user?.id);
+  const managerProject = allProjects.find((p: any) => (p.managerId ?? p.manager?.id) === user?.id);
 
   // local state for selected project id (can be overridden by prop)
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(projectId ?? (isProjectManager ? managerProject?.id : undefined));
@@ -171,7 +173,7 @@ export const CreateActivityModal = ({
 
           {/* Fecha */}
           <div className="space-y-2">
-            <Label htmlFor="date">Fecha de Realización</Label>
+            <Label htmlFor="date">Fecha de inicio</Label>
             <Input id="date" type="date" value={formData.date} onChange={(e) => { setFormData({ ...formData, date: e.target.value }); if (errors.date) setErrors({ ...errors, date: '' }); }} min={projectStartDate} className={errors.date ? 'border-destructive' : ''} />
             {errors.date && <p className="text-xs text-destructive">{errors.date}</p>}
           </div>
@@ -229,8 +231,16 @@ export const CreateActivityModal = ({
           </div>
 
           <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={createActivityMutation.isPending}>Cancelar</Button>
-            <Button type="submit" disabled={createActivityMutation.isPending}>{createActivityMutation.isPending ? 'Creando...' : 'Crear Actividad'}</Button>
+            {/* react-query naming varies by version: normalize to a safe `isSubmitting` flag */}
+            {(() => {
+              const isSubmitting = (createActivityMutation as any).isLoading ?? (createActivityMutation as any).isPending ?? false;
+              return (
+                <>
+                  <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>
+                  <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Creando...' : 'Crear Actividad'}</Button>
+                </>
+              );
+            })()}
           </DialogFooter>
         </form>
       </DialogContent>
