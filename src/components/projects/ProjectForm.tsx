@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Project, CreateProjectDTO } from '@/types/project';
 import { useCreateProject } from '@/hooks/project/useCreateProject';
 import { useUpdateProject } from '@/hooks/project/useUpdateProject';
+import { useUsers } from '@/hooks/user/useUsers';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
@@ -14,11 +15,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ProjectFormProps {
   open: boolean;
   project: Project | null; // null = crear, Project = editar
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 /**
@@ -29,8 +38,16 @@ export const ProjectForm = ({
   open,
   project,
   onOpenChange,
+  onSuccess,
 }: ProjectFormProps) => {
   const { user } = useAuth();
+  const { data: usersData = [] } = useUsers();
+  
+  // Filtrar solo project managers y coordinators
+  const managers = usersData.filter((u: any) => 
+    u.role === 'PROJECT_MANAGER' || u.role === 'COORDINATOR'
+  );
+  
   const [formData, setFormData] = useState<CreateProjectDTO>({
     name: '',
     managerId: user?.id || '',
@@ -87,6 +104,10 @@ export const ProjectForm = ({
       newErrors.name = 'El nombre del proyecto es requerido';
     }
 
+    if (!formData.managerId) {
+      newErrors.managerId = 'Debe seleccionar un project manager';
+    }
+
     if (formData.startDate && formData.endDate) {
       if (new Date(formData.startDate) > new Date(formData.endDate)) {
         newErrors.dates = 'La fecha de inicio no puede ser posterior a la fecha de fin';
@@ -106,12 +127,18 @@ export const ProjectForm = ({
       updateProject(
         { id: project.id, data: formData },
         {
-          onSuccess: () => onOpenChange(false),
+          onSuccess: () => {
+            onOpenChange(false);
+            onSuccess?.();
+          },
         }
       );
     } else {
       createProject(formData, {
-        onSuccess: () => onOpenChange(false),
+        onSuccess: () => {
+          onOpenChange(false);
+          onSuccess?.();
+        },
       });
     }
   };
@@ -147,7 +174,27 @@ export const ProjectForm = ({
             )}
           </div>
 
-          {/* Descripción */}
+          {/* Project Manager */}
+          <div className="space-y-2">
+            <Label htmlFor="managerId">
+              Project Manager <span className="text-destructive">*</span>
+            </Label>
+            <Select value={formData.managerId} onValueChange={(value) => setFormData({ ...formData, managerId: value })}>
+              <SelectTrigger id="managerId">
+                <SelectValue placeholder="Selecciona un project manager" />
+              </SelectTrigger>
+              <SelectContent>
+                {managers.map((manager: any) => (
+                  <SelectItem key={manager.id} value={manager.id}>
+                    {manager.name} ({manager.role === 'PROJECT_MANAGER' ? 'Project Manager' : 'Coordinador'})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.managerId && (
+              <p className="text-xs text-destructive">{errors.managerId}</p>
+            )}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
             <Textarea
