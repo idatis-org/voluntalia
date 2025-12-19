@@ -27,7 +27,9 @@ export interface CreateWorkLogDTO{
   activity: ActivityTask | null;
 }
 
-export type UpdateWorkLogDTO = Partial<CreateWorkLogDTO>
+export type UpdateWorkLogDTO = Partial<CreateWorkLogDTO> & {
+  status?: 'approved' | 'rejected' | 'pending';
+}
 
 
 export interface WorkLogReponse{

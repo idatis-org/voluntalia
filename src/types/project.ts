@@ -10,6 +10,7 @@ export interface Project {
   description?: string;
   managerId: string;
   createdBy: string;
+  status: 'planned' | 'active' | 'completed' | 'cancelled';
   startDate?: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
   createdAt: string;
@@ -18,6 +19,11 @@ export interface Project {
   creator?: User;
   volunteers?: User[];
   activities?: ActivityTask[];
+  // Optional fields returned by the API for counts and permissions (camelCase)
+  volunteersCount?: number;
+  activitiesCount?: number;
+  canEdit?: boolean;
+  canManageVolunteers?: boolean;
 }
 
 /**
@@ -37,6 +43,7 @@ export interface CreateProjectDTO {
   name: string; // Requerido
   managerId: string; // Requerido - User ID del manager
   description?: string;
+  status?: 'planned' | 'active' | 'completed' | 'cancelled';
   startDate?: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
 }
@@ -47,6 +54,7 @@ export interface CreateProjectDTO {
 export interface UpdateProjectDTO {
   name?: string;
   description?: string;
+  status?: 'planned' | 'active' | 'completed' | 'cancelled';
   startDate?: string;
   endDate?: string;
 }
@@ -70,4 +78,5 @@ export interface ProjectResponse {
 
 export interface ProjectsResponse {
   projects: Project[];
+  meta?: { page: number; per_page: number; total: number; total_pages: number };
 }
