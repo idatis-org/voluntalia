@@ -37,7 +37,7 @@ const Hours: React.FC = () => {
     isSubmitting
   } = useHoursPage();
 
-  if (isLoading) 
+  if (isLoading)
     return (
       <div className="flex h-64 items-center justify-center">
         <Spinner size="lg" color="text-indigo-600" />
@@ -48,8 +48,8 @@ const Hours: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageLayout 
-        title="Volunteer Hours" 
+      <PageLayout
+        title="Volunteer Hours"
         description="Track and manage your volunteer time contributions"
       >
         {/* Stats Cards */}
@@ -65,7 +65,7 @@ const Hours: React.FC = () => {
           filterOptions={filterOptions}
           filterPlaceholder="All Status"
           actions={
-            <Button 
+            <Button
               className="bg-gradient-primary hover:shadow-hover transition-smooth"
               onClick={() => logHoursModal.toggleModal()}
             >
@@ -95,7 +95,7 @@ const Hours: React.FC = () => {
                   <div>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Clock className="h-5 w-5 text-primary" />
-                      {entry.hours.hours} {entry.hours.hours === 1 ? 'hour' : 'hours'} - {new Date(entry.week_start).toLocaleDateString()}
+                      {entry.hours.hours} {entry.hours.hours === 1 ? 'hour' : 'hours'} - {new Date(entry.weekStart).toLocaleDateString()}
                     </CardTitle>
                     <CardDescription className="mt-1">
                       {entry.activity && `• ${entry.activity.description || entry.activity}`}
