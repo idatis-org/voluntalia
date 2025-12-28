@@ -1,3 +1,5 @@
+import { BaseResource } from "./base";
+
 export interface Resource {
   id: string;
   filename: string;
@@ -18,15 +20,9 @@ export interface Resource {
   category_id?: string;
 }
 
-export interface ResourceCategory {
-  id: string;
-  name: string;
-}
 
-export interface ResourceType {
-  id: string;
-  name: string;
-}
+export type ResourceCategory = BaseResource;
+export type ResourceType = BaseResource;
 
 export interface CreateResourceDTO {
   title: string;

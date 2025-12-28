@@ -244,7 +244,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((t) => (
-                      <SelectItem key={t.name} value={t.id}>
+                      <SelectItem key={t.id} value={t.id}>
                         {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
                       </SelectItem>
                     ))}
