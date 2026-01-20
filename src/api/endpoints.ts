@@ -7,5 +7,7 @@ export const ENDPOINTS = {
   RESET_PASSWORD: '/auth/reset-password',
   WORKLOG: '/worklog',
   SKILLS: '/skill',
+  ACTIVITIES: '/activity',
+  RESOURCE: '/document',
   STATS: 'dashboard/stats',
 };

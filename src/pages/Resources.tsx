@@ -10,112 +10,92 @@ import { Search, Filter, FileText, Download, ExternalLink, BookOpen, Video, File
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import UploadResourceModal from "@/components/modals/UploadResourceModal";
 import { useToast } from "@/hooks/use-toast";
+import { useResourceCategory } from "@/hooks/resource/category/useResourceCategory";
+import { useResourceType } from "@/hooks/resource/resource-type/userResourceType";
+import { useResource } from "@/hooks/resource/useResource";
+import { Resource } from "@/types/resource";
+import useDownloadResource from "@/hooks/resource/useDownloadResource";
+import { useDeleteResource } from "@/hooks/resource/useDeleteResource";
+import { useAuth } from "@/contexts/AuthContext";
+import { useConfirmDialog } from "@/hooks/common/useConfirmDialog";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 const Resources = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [resources, setResources] = useState([
+  const { data: categories = [] } = useResourceCategory();
+  const { data: types = [] } = useResourceType();
+  const { data: resources = [] } = useResource();
+  const [_, setResources] = useState<Resource[]>(resources);
+  const { mutate: download, isPending } = useDownloadResource();
+  const confirmDialog = useConfirmDialog();
+  const deleteResource = useDeleteResource();
+  const { user } = useAuth();
 
-  
-    {
-      id: 1,
-      title: "Volunteer Handbook 2024",
-      description: "Complete guide for new volunteers including policies, procedures, and best practices",
-      type: "document",
-      category: "training",
-      format: "PDF",
-      size: "2.3 MB",
-      downloads: 1247,
-      uploadDate: "2024-01-15",
-      tags: ["handbook", "training", "policies"]
-    },
-    {
-      id: 2,
-      title: "Community Outreach Training Video",
-      description: "Learn effective community engagement techniques and communication strategies",
-      type: "video",
-      category: "training",
-      format: "MP4",
-      size: "45.7 MB",
-      downloads: 892,
-      uploadDate: "2024-03-10",
-      tags: ["video", "outreach", "communication"]
-    },
-    {
-      id: 3,
-      title: "Event Planning Checklist",
-      description: "Step-by-step checklist for organizing successful volunteer events",
-      type: "document",
-      category: "tools",
-      format: "DOC",
-      size: "156 KB",
-      downloads: 654,
-      uploadDate: "2024-02-20",
-      tags: ["checklist", "events", "planning"]
-    },
-    {
-      id: 4,
-      title: "Safety Guidelines",
-      description: "Important safety protocols and emergency procedures for all volunteers",
-      type: "document",
-      category: "safety",
-      format: "PDF",
-      size: "1.1 MB",
-      downloads: 1156,
-      uploadDate: "2024-01-08",
-      tags: ["safety", "emergency", "protocols"]
-    },
-    {
-      id: 5,
-      title: "First Aid Certification Course",
-      description: "Online first aid training course with certification upon completion",
-      type: "course",
-      category: "training",
-      format: "Online",
-      size: "N/A",
-      downloads: 423,
-      uploadDate: "2024-04-01",
-      tags: ["first aid", "certification", "course"]
-    },
-    {
-      id: 6,
-      title: "Volunteer Time Tracking Template",
-      description: "Excel template for tracking volunteer hours and activities",
-      type: "template",
-      category: "tools",
-      format: "XLSX",
-      size: "89 KB",
-      downloads: 789,
-      uploadDate: "2024-03-15",
-      tags: ["template", "tracking", "hours"]
-    }
-  ]);
+  const counts = resources.reduce<Record<string, number>>((acc, r) => {
+    acc[r.resource_type_id] = (acc[r.resource_type_id] || 0) + 1;
+    return acc;
+  }, {});
 
-  const handleUploadResource = (newResource: any) => {
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handlePreviewResource = (resource: Resource) => {
+    if (!resource.storage_path) return;
+
+    const cleaned = resource.storage_path
+      .replace(/\\/g, '/')               
+      .replace(/^https?:\/+/, '')        
+      .replace(/^\/+/, '');              
+
+    const absoluteUrl = `http://${cleaned}`;
+
+    window.open(absoluteUrl, '_blank');
+  };
+
+  const handleUploadResource = (newResource: Resource) => {
     setResources(prev => [...prev, newResource]);
   };
 
-  const handleDeleteResource = (resourceId: number) => {
-    setResources(prev => prev.filter(r => r.id !== resourceId));
-    toast({
-      title: "Resource Deleted",
-      description: "The resource has been successfully removed.",
-    });
-  };
-
-  const handleDownloadResource = (resource: any) => {
-    // In real implementation, this would trigger actual download
-    setResources(prev => prev.map(r => 
-      r.id === resource.id 
-        ? { ...r, downloads: r.downloads + 1 }
-        : r
-    ));
-    toast({
-      title: "Download Started",
-      description: `Downloading "${resource.title}"...`,
-    });
+  const handleDeleteResource = async (resource: Resource) => {
+      if(resource) {
+        confirmDialog.showDialog({
+          title: 'Delete Resource',
+          description: `Are you sure you want to delete "${resource.filename}"? This action cannot be undone.`,
+          confirmText: 'Delete',
+          variant: 'destructive',
+          onConfirm: async () => {
+            if(resource.user_id !== user?.id){
+              toast({
+                title: "Unauthorized",
+                description: "You do not have permission to delete this resource.",
+                variant: "destructive"
+              });
+              return;
+            }
+            try{
+              await deleteResource.mutateAsync(resource.id);
+              toast({
+                title: "Resource Deleted",
+                description: "Resource has been removed."
+              });
+            }catch (error) {
+              toast({
+                title: "Error",
+                description: "Failed to delete resource. Please try again.",
+                variant: "destructive"
+              });
+            }
+          },
+        });
+      }
   };
 
   const getTypeIcon = (type: string) => {
@@ -128,29 +108,34 @@ const Resources = () => {
     }
   };
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryColor = (id: string) => {
+    const category = categories.find(c => c.id === id)?.name.toLowerCase();
     switch (category) {
-      case 'training': return 'bg-blue-100 text-blue-800';
-      case 'tools': return 'bg-green-100 text-green-800';
-      case 'safety': return 'bg-red-100 text-red-800';
+      case 'education': return 'bg-blue-100 text-blue-800';
+      case 'health': return 'bg-green-100 text-green-800';
+      case 'legal': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const filteredResources = resources.filter(resource => {
-    const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    const parseTags = (t: string | null): string[] =>
+      t ? JSON.parse(t).map((s: string) => s.toLowerCase()) : [];
+
+    const matchesSearch = resource.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        parseTags(resource.tags).some(tag => tag.includes(searchTerm.toLowerCase()));
     
-    const matchesFilter = filterBy === "all" || resource.category === filterBy;
+    const matchesFilter = filterBy === "all" || resource.category_id === filterBy;
     
     return matchesSearch && matchesFilter;
   });
 
-  const documents = filteredResources.filter(r => r.type === 'document');
-  const videos = filteredResources.filter(r => r.type === 'video');
-  const courses = filteredResources.filter(r => r.type === 'course');
-  const templates = filteredResources.filter(r => r.type === 'template');
+  const documents = filteredResources.filter(r => r.resource_type_id === types.find(t => t.name === 'document')?.id);
+  const videos = filteredResources.filter(r => r.resource_type_id === types.find(t => t.name === 'video')?.id);
+  const courses = filteredResources.filter(r => r.resource_type_id === types.find(t => t.name === 'course')?.id);
+  const templates = filteredResources.filter(r => r.resource_type_id === types.find(t => t.name === 'template')?.id);
+  const totalDownloads = resources.reduce((sum, r) => sum + r.downloads, 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -179,7 +164,7 @@ const Resources = () => {
               <div className="flex items-center">
                 <Download className="h-8 w-8 text-soft-green" />
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-foreground">5,161</p>
+                  <p className="text-2xl font-bold text-foreground">{totalDownloads}</p>
                   <p className="text-sm text-muted-foreground">Total Downloads</p>
                 </div>
               </div>
@@ -229,9 +214,12 @@ const Resources = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="training">Training</SelectItem>
-                  <SelectItem value="tools">Tools</SelectItem>
-                  <SelectItem value="safety">Safety</SelectItem>
+                  {/* Tabs dinámicos */}
+                  {categories.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button 
@@ -249,10 +237,12 @@ const Resources = () => {
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all">All ({filteredResources.length})</TabsTrigger>
-            <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
-            <TabsTrigger value="videos">Videos ({videos.length})</TabsTrigger>
-            <TabsTrigger value="courses">Courses ({courses.length})</TabsTrigger>
-            <TabsTrigger value="templates">Templates ({templates.length})</TabsTrigger>
+            {/* Tabs dinámicos */}
+            {types.map((t) => (
+              <TabsTrigger key={t.id} value={t.name}>
+                {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()} ({counts[t.id] || 0})
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="all">
@@ -268,9 +258,9 @@ const Resources = () => {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
-                            <CardTitle className="text-lg">{resource.title}</CardTitle>
-                            <Badge variant="outline" className={getCategoryColor(resource.category)}>
-                              {resource.category}
+                            <CardTitle className="text-lg">{resource.filename}</CardTitle>
+                            <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
+                              {categories.find(c => c.id === resource.category_id)?.name}
                             </Badge>
                           </div>
                           <CardDescription className="mb-3">{resource.description}</CardDescription>
@@ -281,31 +271,34 @@ const Resources = () => {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                           <span>Format: {resource.format}</span>
-                          <span>Size: {resource.size}</span>
+                          <span>Size: {formatFileSize(resource.size)}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                           <span>Downloads: {resource.downloads}</span>
-                          <span>Added: {resource.uploadDate}</span>
+                          <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mb-4">
-                          {resource.tags.map((tag) => (
+                          {(JSON.parse(resource.tags || '[]') as string[]).map((tag) => (
                             <Badge key={tag} variant="outline" className="text-xs">
                               {tag}
                             </Badge>
                           ))}
                         </div>
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" className="flex-1">
+                          <Button variant="outline" size="sm" className="flex-1"
+                          onClick={() => handlePreviewResource(resource)}>
                             <Eye className="h-4 w-4 mr-2" />
                             Preview
                           </Button>
                           <Button 
                             size="sm" 
                             className="flex-1"
-                            onClick={() => handleDownloadResource(resource)}
+                            // onClick={() => handleDownloadResource(resource)}
+                            onClick={() => download(resource)}
+                            disabled={isPending}
                           >
                             <Download className="h-4 w-4 mr-2" />
-                            Download
+                            {isPending ? 'Downloading...' : 'Download'}
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -315,16 +308,12 @@ const Resources = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
                                 <ExternalLink className="h-4 w-4 mr-2" />
                                 Share Link
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
-                                onClick={() => handleDeleteResource(resource.id)}
+                                onClick={() => handleDeleteResource(resource)}
                                 className="text-destructive focus:text-destructive"
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
@@ -341,7 +330,7 @@ const Resources = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="documents">
+          <TabsContent value="document">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {documents.map((resource) => (
                 <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
@@ -352,8 +341,8 @@ const Resources = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.title}</CardTitle>
-                          <Badge variant="outline" className={getCategoryColor(resource.category)}>
+                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
+                          <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
                             {resource.category}
                           </Badge>
                         </div>
@@ -369,17 +358,23 @@ const Resources = () => {
                       </div>
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <span>Downloads: {resource.downloads}</span>
-                        <span>Added: {resource.uploadDate}</span>
+                        <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
                       </div>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm" className="flex-1">
                           <ExternalLink className="h-4 w-4 mr-2" />
                           View
                         </Button>
-                        <Button size="sm" className="flex-1">
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </Button>
+                        <Button 
+                            size="sm" 
+                            className="flex-1"
+                            // onClick={() => handleDownloadResource(resource)}
+                            onClick={() => download(resource)}
+                            disabled={isPending}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            {isPending ? 'Downloading...' : 'Download'}
+                          </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -388,7 +383,7 @@ const Resources = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="videos">
+          <TabsContent value="video">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {videos.map((resource) => (
                 <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
@@ -399,8 +394,8 @@ const Resources = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.title}</CardTitle>
-                          <Badge variant="outline" className={getCategoryColor(resource.category)}>
+                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
+                          <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
                             {resource.category}
                           </Badge>
                         </div>
@@ -416,7 +411,7 @@ const Resources = () => {
                       </div>
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <span>Views: {resource.downloads}</span>
-                        <span>Added: {resource.uploadDate}</span>
+                        <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
                       </div>
                       <Button size="sm" className="w-full">
                         <ExternalLink className="h-4 w-4 mr-2" />
@@ -429,7 +424,7 @@ const Resources = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="courses">
+          <TabsContent value="course">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {courses.map((resource) => (
                 <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
@@ -440,8 +435,8 @@ const Resources = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.title}</CardTitle>
-                          <Badge variant="outline" className={getCategoryColor(resource.category)}>
+                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
+                          <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
                             {resource.category}
                           </Badge>
                         </div>
@@ -466,7 +461,7 @@ const Resources = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="templates">
+          <TabsContent value="template">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {templates.map((resource) => (
                 <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
@@ -477,8 +472,8 @@ const Resources = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.title}</CardTitle>
-                          <Badge variant="outline" className={getCategoryColor(resource.category)}>
+                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
+                          <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
                             {resource.category}
                           </Badge>
                         </div>
@@ -494,12 +489,18 @@ const Resources = () => {
                       </div>
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <span>Downloads: {resource.downloads}</span>
-                        <span>Added: {resource.uploadDate}</span>
+                        <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
                       </div>
-                      <Button size="sm" className="w-full">
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Template
-                      </Button>
+                      <Button 
+                            size="sm" 
+                            className="w-full"
+                            // onClick={() => handleDownloadResource(resource)}
+                            onClick={() => download(resource)}
+                            disabled={isPending}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            {isPending ? 'Downloading...' : 'Download'}
+                          </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -513,6 +514,19 @@ const Resources = () => {
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         onUpload={handleUploadResource}
+        categories={categories}   // ← pasas los datos
+        types={types}
+      />
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={confirmDialog.hideDialog}
+        onConfirm={confirmDialog.handleConfirm}
+        isLoading={confirmDialog.isConfirming}
+        title={confirmDialog.data?.title ?? ''}
+        description={confirmDialog.data?.description ?? ''}
+        confirmText={confirmDialog.data?.confirmText}
+        cancelText={confirmDialog.data?.cancelText}
+        variant={confirmDialog.data?.variant}
       />
     </div>
   );
