@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -17,85 +17,173 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { X, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useCreateUser } from "@/hooks/user/useCreateUser";
-import { CreateUserDTO } from "@/types/user";
-import { useSkills } from "@/hooks/skill/useSkills";
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { X, Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useCreateUser } from '@/hooks/user/useCreateUser';
+import { useUpdateUser } from '@/hooks/user/useUpdateUser';
+import { CreateUserDTO, User } from '@/types/user';
+import { useSkills } from '@/hooks/skill/useSkills';
 
 interface AddVolunteerModalProps {
   open: boolean;
+  isEdit?: boolean;
+  volunteer?: User | null;
   onOpenChange: (open: boolean) => void;
   onAdd?: (volunteer: unknown) => void;
 }
 
+type UserBase = Pick<
+  User,
+  'name' | 'email' | 'phone' | 'country' | 'city' | 'role'
+>;
+
 const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
   open,
+  isEdit,
+  volunteer,
   onOpenChange,
   onAdd,
 }) => {
   const { toast } = useToast();
   const { mutate, isPending, error } = useCreateUser();
+  const {
+    mutate: mutateUpdate,
+    isPending: isUpdating,
+    error: errorOnUpdate,
+  } = useUpdateUser();
   const { data: allSkills = [] } = useSkills();
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
-  const [skillSearch, setSkillSearch] = useState("");
+  const [skillSearch, setSkillSearch] = useState('');
 
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    country: "",
-    city: "",
-    address: "",
-    emergency_contact: "",
-    emergency_phone: "",
-    availability: "",
-    motivation: "",
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    country: '',
+    city: '',
+    address: '',
+    emergency_contact: '',
+    emergency_phone: '',
+    availability: '',
+    motivation: '',
   });
+
+  // Populate form when editing, or reset when adding new volunteer
+  useEffect(() => {
+    if (open) {
+      if (isEdit && volunteer) {
+        // Split name into first and last name
+        const nameParts = volunteer.name.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        setFormData({
+          firstName,
+          lastName,
+          email: volunteer.email,
+          phone: volunteer.phone || '',
+          country: volunteer.country,
+          city: volunteer.city,
+          address: '',
+          emergency_contact: '',
+          emergency_phone: '',
+          availability: '',
+          motivation: '',
+        });
+
+        // Pre-populate skills if available
+        // Note: We need to check if volunteer has skills data
+        // For now, we'll reset skills - can be enhanced when backend provides skills
+        setSelectedSkills(new Set());
+      } else {
+        // Reset form for adding new volunteer
+        resetForm();
+      }
+    }
+  }, [open, isEdit, volunteer]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload: CreateUserDTO = {
-      name: `${formData.firstName} ${formData.lastName}`,
-      email: formData.email,
-      password: "aaa111",
-      country: formData.country,
-      city: formData.city,
-      skills: selectedSkills.size > 0 ? Array.from(selectedSkills) : [],
-    };
+    const name = `${formData.firstName} ${formData.lastName}`;
 
-    console.log(payload);
-    mutate(payload, {
-      onSuccess: (newVolunteer) => {
-        onAdd?.(newVolunteer);
-        console.log(newVolunteer);
-        toast({
-          title: "Volunteer Added Successfully",
-          description: `${newVolunteer.name} ${newVolunteer.email} has been added.`,
-        });
-        onOpenChange(false);
-        resetForm();
-      },
-      onError: (err) => {
-        console.log(err);
-        toast({
-          title: "Error",
-          description: "Failed to add volunteer. Please try again.",
-          variant: "destructive",
-        });
-      },
-    });
+    if (isEdit && volunteer) {
+      // Update existing volunteer
+      const updatePayload = {
+        name,
+        phone: formData.phone,
+        country: formData.country,
+        city: formData.city,
+        skills: selectedSkills.size > 0 ? Array.from(selectedSkills) : [],
+      };
+
+      console.log('Update payload:', updatePayload);
+      mutateUpdate(
+        { id: volunteer.id, data: updatePayload },
+        {
+          onSuccess: (updatedVolunteer) => {
+            console.log('Updated volunteer:', updatedVolunteer);
+            toast({
+              title: 'Volunteer Updated Successfully',
+              description: `${name} has been updated.`,
+            });
+            onOpenChange(false);
+            resetForm();
+          },
+          onError: (err) => {
+            console.log('Update error:', err);
+            toast({
+              title: 'Error',
+              description: 'Failed to update volunteer. Please try again.',
+              variant: 'destructive',
+            });
+          },
+        }
+      );
+    } else {
+      // Create new volunteer
+      const createPayload = {
+        name,
+        email: formData.email,
+        password: 'aaa111',
+        country: formData.country,
+        city: formData.city,
+        skills: selectedSkills.size > 0 ? Array.from(selectedSkills) : [],
+        phone: formData.phone,
+      };
+
+      console.log('Create payload:', createPayload);
+      mutate(createPayload, {
+        onSuccess: (newVolunteer) => {
+          onAdd?.(newVolunteer);
+          console.log('New volunteer:', newVolunteer);
+          toast({
+            title: 'Volunteer Added Successfully',
+            description: `${newVolunteer.name} has been added.`,
+          });
+          onOpenChange(false);
+          resetForm();
+        },
+        onError: (err) => {
+          console.log('Create error:', err);
+          toast({
+            title: 'Error',
+            description: 'Failed to add volunteer. Please try again.',
+            variant: 'destructive',
+          });
+        },
+      });
+    }
   };
 
   const handleAddSkill = (skillId: string) => {
     const newSelected = new Set(selectedSkills);
     newSelected.add(skillId);
     setSelectedSkills(newSelected);
-    setSkillSearch("");
+    setSkillSearch('');
     console.log(selectedSkills);
   };
 
@@ -105,37 +193,43 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
     setSelectedSkills(newSelected);
   };
 
-  const filteredSkills = allSkills.filter(skill => 
-      !selectedSkills.has(skill.id) && 
-      skill.name.toLowerCase().includes(skillSearch.toLowerCase())
-  ).slice(0, 5);
+  const filteredSkills = allSkills
+    .filter(
+      (skill) =>
+        !selectedSkills.has(skill.id) &&
+        skill.name.toLowerCase().includes(skillSearch.toLowerCase())
+    )
+    .slice(0, 5);
 
   const resetForm = () => {
     setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      country: "",
-      city: "",
-      address: "",
-      emergency_contact: "",
-      emergency_phone: "",
-      availability: "",
-      motivation: "",
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      country: '',
+      city: '',
+      address: '',
+      emergency_contact: '',
+      emergency_phone: '',
+      availability: '',
+      motivation: '',
     });
     setSelectedSkills(new Set());
-    setSkillSearch("");
+    setSkillSearch('');
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Volunteer</DialogTitle>
+          <DialogTitle>
+            {isEdit ? 'Edit Volunteer' : 'Add New Volunteer'}
+          </DialogTitle>
           <DialogDescription>
-            Add a new volunteer to the VoluntALIA community. Fill out their
-            information below.
+            {isEdit
+              ? 'Update the volunteer information below.'
+              : 'Add a new volunteer to the VoluntALIA community. Fill out their information below.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -179,6 +273,8 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
                     setFormData({ ...formData, email: e.target.value })
                   }
                   required
+                  disabled={isEdit}
+                  className={isEdit ? 'bg-muted cursor-not-allowed' : ''}
                 />
               </div>
               <div className="space-y-2">
@@ -286,9 +382,13 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
               {selectedSkills.size > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {allSkills
-                    .filter(s => selectedSkills.has(s.id))
+                    .filter((s) => selectedSkills.has(s.id))
                     .map((skill) => (
-                      <Badge key={skill.id} variant="secondary" className="flex items-center gap-1">
+                      <Badge
+                        key={skill.id}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
                         {skill.name}
                         <button
                           type="button"
@@ -298,7 +398,7 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
                           <X className="h-3 w-3" />
                         </button>
                       </Badge>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>
@@ -350,10 +450,16 @@ const AddVolunteerModal: React.FC<AddVolunteerModalProps> = ({
             </Button>
             <Button
               type="submit"
-              disabled={isPending}
+              disabled={isPending || isUpdating}
               className="bg-gradient-primary"
             >
-              {isPending ? "Adding..." : "Add Volunteer"}
+              {isEdit
+                ? isUpdating
+                  ? 'Updating...'
+                  : 'Update Volunteer'
+                : isPending
+                  ? 'Adding...'
+                  : 'Add Volunteer'}
             </Button>
           </DialogFooter>
         </form>

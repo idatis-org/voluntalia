@@ -9,4 +9,5 @@ export const ENDPOINTS = {
   SKILLS: '/skill',
   ACTIVITIES: '/activity',
   RESOURCE: '/document',
+  STATS: 'dashboard/stats',
 };
