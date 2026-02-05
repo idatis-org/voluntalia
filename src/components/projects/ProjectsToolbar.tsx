@@ -106,7 +106,7 @@ export const ProjectsToolbar: React.FC<ProjectsToolbarProps> = ({
       rightActions={rightActions}
       className={className}
       mainRowContent={
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-between">
           {/* Manager dropdown */}
           <Popover>
             <PopoverTrigger asChild>
@@ -225,7 +225,7 @@ export const ProjectsToolbar: React.FC<ProjectsToolbarProps> = ({
             <Label className="text-xs font-medium text-muted-foreground">Desde:</Label>
             <Input 
               type="date" 
-              className="h-9 w-[130px] text-xs" 
+              className="h-9 w-[145px] text-xs" 
               value={filters.dateFrom || ''} 
               onChange={(e) => onFilterChange && onFilterChange('dateFrom', e.target.value)} 
             />
@@ -236,7 +236,7 @@ export const ProjectsToolbar: React.FC<ProjectsToolbarProps> = ({
             <Label className="text-xs font-medium text-muted-foreground">Hasta:</Label>
             <Input 
               type="date" 
-              className="h-9 w-[130px] text-xs" 
+              className="h-9 w-[145px] text-xs" 
               value={filters.dateTo || ''} 
               onChange={(e) => onFilterChange && onFilterChange('dateTo', e.target.value)} 
             />
