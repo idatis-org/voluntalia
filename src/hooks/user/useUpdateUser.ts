@@ -4,8 +4,8 @@ import { User } from "@/types/user";
 
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
-  
-  return useMutation<User, Error, { id: number; data: Partial<User> }>({
+
+  return useMutation<User, Error, { id: string; data: Partial<User> }>({
     mutationFn: ({ id, data }) => updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
