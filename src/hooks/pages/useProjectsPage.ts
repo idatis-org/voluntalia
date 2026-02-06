@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import type { Project } from '@/types/project';
+import type { Project, ProjectsResponse } from '@/types/project';
 import { useProjects } from '@/hooks/project/useProjects';
 import { useDeleteProject } from '@/hooks/project/useDeleteProject';
 import { useAddVolunteerToProject } from '@/hooks/project/useAddVolunteerToProject';
@@ -15,8 +15,13 @@ export const useProjectsPage = () => {
 
   // Queries
   const { data, isLoading, error } = useProjects();
-  const raw = data as any;
-  const projects = Array.isArray(raw) ? raw : (raw?.projects ?? []);
+
+  const projects = useMemo(() => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (data && 'projects' in data && Array.isArray(data.projects)) return data.projects;
+    return [];
+  }, [data]);
 
   // Mutations
   const { mutate: deleteProjectMutation, isPending: isDeleting } =

@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { createProject } from '@/services/projectService';
 import { useToast } from '@/hooks/use-toast';
-import type { CreateProjectDTO, Project } from '@/types/project';
+import type { Project } from '@/types/project';
 
 /**
  * Hook para crear un nuevo proyecto
@@ -22,14 +23,17 @@ export const useCreateProject = () => {
         description: `"${newProject.name}" ha sido creado exitosamente`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
+      let description = 'No se pudo crear el proyecto';
+      if (isAxiosError(error)) {
+        description = error.response?.data?.message || error.message || description;
+      } else {
+        description = error.message || description;
+      }
       toast({
         variant: 'destructive',
         title: 'Error',
-        description:
-          error?.response?.data?.message ||
-          error.message ||
-          'No se pudo crear el proyecto',
+        description,
       });
     },
   });

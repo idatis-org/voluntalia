@@ -17,13 +17,13 @@ export const useProjectsPageToolbar = () => {
   // Debounce search term locally
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    
+
     // Debounce: wait 300ms before updating server query
     const timer = setTimeout(() => {
       setDebouncedSearch(value);
       setPage(1);
     }, 300);
-    
+
     return () => clearTimeout(timer);
   };
 
@@ -36,8 +36,12 @@ export const useProjectsPageToolbar = () => {
   });
 
   // Normalize response
-  const raw = data as any;
-  const projects = Array.isArray(raw) ? raw : (raw?.projects ?? []);
+  const projects = useMemo(() => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (data && 'projects' in data && Array.isArray(data.projects)) return data.projects;
+    return [];
+  }, [data]);
 
   // No filters: only search term is considered for active state
   const activeFilters: string[] = [];
@@ -45,8 +49,9 @@ export const useProjectsPageToolbar = () => {
     activeFilters.push(`Search: "${searchTerm.length > 20 ? searchTerm.slice(0, 20) + '…' : searchTerm}"`);
   }
 
-  const totalItems = raw?.meta?.total ?? projects.length;
-  const totalPages = raw?.meta?.total_pages ?? Math.max(1, Math.ceil(totalItems / perPage));
+  const meta = data && !Array.isArray(data) ? data.meta : undefined;
+  const totalItems = meta?.total ?? projects.length;
+  const totalPages = meta?.total_pages ?? Math.max(1, Math.ceil(totalItems / perPage));
 
   const resetSearch = () => {
     setSearchTerm('');

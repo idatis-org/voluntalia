@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { updateProject } from '@/services/projectService';
 import { useToast } from '@/hooks/use-toast';
 import type { UpdateProjectDTO } from '@/types/project';
@@ -22,14 +23,17 @@ export const useUpdateProject = () => {
         description: 'Los cambios han sido guardados exitosamente',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
+      let description = 'No se pudo actualizar el proyecto';
+      if (isAxiosError(error)) {
+        description = error.response?.data?.message || error.message || description;
+      } else {
+        description = error.message || description;
+      }
       toast({
         variant: 'destructive',
         title: 'Error',
-        description:
-          error?.response?.data?.message ||
-          error.message ||
-          'No se pudo actualizar el proyecto',
+        description,
       });
     },
   });

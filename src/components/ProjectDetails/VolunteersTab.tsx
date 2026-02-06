@@ -4,11 +4,16 @@ import { Users } from "lucide-react";
 import { Project } from "@/types/project";
 import { VolunteerCard } from "@/components/volunteers/VolunteerCard";
 
+import { User } from "@/types/user";
+
 interface VolunteersTabProps {
   project: Project;
   onAddVolunteer: () => void;
-  onViewProfile: (volunteer: any) => void;
-  onContact: (volunteer: any, method: string) => void;
+  onViewProfile: (volunteer: User) => void;
+  onContact: (volunteer: User, method: 'email' | 'phone') => void;
+  onEditProfile?: (volunteer: User) => void;
+  onManageActivities?: (volunteer: User) => void;
+  onDelete?: (volunteerId: string) => void;
 }
 
 export const VolunteersTab: React.FC<VolunteersTabProps> = ({
@@ -16,6 +21,9 @@ export const VolunteersTab: React.FC<VolunteersTabProps> = ({
   onAddVolunteer,
   onViewProfile,
   onContact,
+  onEditProfile,
+  onManageActivities,
+  onDelete,
 }) => {
   return (
     <>
@@ -36,9 +44,10 @@ export const VolunteersTab: React.FC<VolunteersTabProps> = ({
               key={v.id}
               volunteer={v}
               onViewProfile={onViewProfile}
-              onManageActivities={() => {}}
               onContact={onContact}
-              onDelete={() => {}}
+              onEditVolunteerProfile={onEditProfile || (() => { })}
+              onManageActivities={onManageActivities || (() => { })}
+              onDelete={onDelete || (() => { })}
             />
           ))}
         </div>

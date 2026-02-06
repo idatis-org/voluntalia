@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
@@ -84,15 +84,15 @@ export const ProjectsToolbar: React.FC<ProjectsToolbarProps> = ({
 
   const rightActions: ToolbarAction[] = canCreate
     ? [
-        {
-          id: 'create-project',
-          label: 'Nuevo Proyecto',
-          icon: <Plus className="h-4 w-4" />,
-          onClick: onCreate,
-          variant: 'default',
-          className: 'bg-gradient-primary hover:shadow-hover transition-smooth',
-        },
-      ]
+      {
+        id: 'create-project',
+        label: 'Nuevo Proyecto',
+        icon: <Plus className="h-4 w-4" />,
+        onClick: onCreate,
+        variant: 'default',
+        className: 'bg-gradient-primary hover:shadow-hover transition-smooth',
+      },
+    ]
     : [];
 
   return (
@@ -115,45 +115,45 @@ export const ProjectsToolbar: React.FC<ProjectsToolbarProps> = ({
                 <div className="flex items-center shrink-0 ml-auto">
                   <div className="mx-2 h-4 w-[1px] bg-border" />
                   <div className="flex items-center justify-center bg-primary/10 text-primary min-w-[20px] h-5 px-1 rounded text-[10px] font-bold">
-                    {!filters.manager || filters.manager.length === managers.length ? 'All' : filters.manager.length}
+                    {(!filters?.manager || filters.manager.length === managers.length) ? 'All' : filters.manager.length}
                   </div>
                 </div>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0" align="start">
               <div className="p-2 space-y-1">
-                <div 
+                <div
                   className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer"
                   onClick={() => {
                     const allIds = managers.map(m => m.id);
                     const isAllSelected = filters.manager?.length === managers.length;
                     // If all are selected, unselecting "All" should result in an empty array (show none)
                     // If not all are selected, selecting "All" should set all IDs
-                    onFilterChange && onFilterChange('manager', isAllSelected ? [] : allIds);
+                    if (onFilterChange) onFilterChange('manager', isAllSelected ? [] : allIds);
                   }}
                 >
-                  <Checkbox 
+                  <Checkbox
                     checked={filters.manager?.length === managers.length && managers.length > 0}
-                    onCheckedChange={() => {}}
+                    onCheckedChange={() => { }}
                   />
                   <span className="text-sm font-medium">Todos</span>
                 </div>
                 <div className="h-[1px] bg-border my-1" />
                 {managers.map((m) => (
-                  <div 
+                  <div
                     key={m.id}
                     className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer"
                     onClick={() => {
                       const current = Array.isArray(filters.manager) ? [...filters.manager] : [];
-                      const next = current.includes(m.id) 
+                      const next = current.includes(m.id)
                         ? current.filter(id => id !== m.id)
                         : [...current, m.id];
-                      onFilterChange && onFilterChange('manager', next);
+                      if (onFilterChange) onFilterChange('manager', next);
                     }}
                   >
-                    <Checkbox 
+                    <Checkbox
                       checked={filters.manager?.includes(m.id)}
-                      onCheckedChange={() => {}}
+                      onCheckedChange={() => { }}
                     />
                     <span className="text-sm">{m.name}</span>
                   </div>
@@ -170,23 +170,23 @@ export const ProjectsToolbar: React.FC<ProjectsToolbarProps> = ({
                 <div className="flex items-center shrink-0 ml-auto">
                   <div className="mx-2 h-4 w-[1px] bg-border" />
                   <div className="flex items-center justify-center bg-primary/10 text-primary min-w-[20px] h-5 px-1 rounded text-[10px] font-bold">
-                      {filters.status.length === 5 ? 'All' : (filters.status.length === 2 && filters.status.includes('planned') && filters.status.includes('active') ? 'Open' : filters.status.length)}
+                    {filters?.status?.length === 5 ? 'All' : (filters?.status?.length === 2 && filters.status.includes('planned') && filters.status.includes('active') ? 'Open' : (filters?.status?.length || 0))}
                   </div>
                 </div>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0" align="start">
               <div className="p-2 space-y-1">
-                <div 
+                <div
                   className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer"
                   onClick={() => {
                     const isOpen = filters.status?.includes('planned') && filters.status?.includes('active') && filters.status?.length === 2;
-                    onFilterChange && onFilterChange('status', isOpen ? [] : ['planned', 'active']);
+                    if (onFilterChange) onFilterChange('status', isOpen ? [] : ['planned', 'active']);
                   }}
                 >
-                  <Checkbox 
+                  <Checkbox
                     checked={filters.status?.includes('planned') && filters.status?.includes('active') && filters.status?.length === 2}
-                    onCheckedChange={() => {}}
+                    onCheckedChange={() => { }}
                   />
                   <span className="text-sm font-medium">Abiertos</span>
                 </div>
@@ -198,20 +198,20 @@ export const ProjectsToolbar: React.FC<ProjectsToolbarProps> = ({
                   { id: 'completed', label: 'Completado' },
                   { id: 'cancelled', label: 'Cancelado' }
                 ].map((s) => (
-                  <div 
+                  <div
                     key={s.id}
                     className="flex items-center space-x-2 p-2 rounded-sm hover:bg-accent cursor-pointer"
                     onClick={() => {
                       const current = Array.isArray(filters.status) ? [...filters.status] : [];
-                      const next = current.includes(s.id) 
+                      const next = current.includes(s.id)
                         ? current.filter(id => id !== s.id)
                         : [...current, s.id];
-                      onFilterChange && onFilterChange('status', next);
+                      if (onFilterChange) onFilterChange('status', next);
                     }}
                   >
-                    <Checkbox 
+                    <Checkbox
                       checked={filters.status?.includes(s.id)}
-                      onCheckedChange={() => {}}
+                      onCheckedChange={() => { }}
                     />
                     <span className="text-sm">{s.label}</span>
                   </div>
@@ -223,30 +223,30 @@ export const ProjectsToolbar: React.FC<ProjectsToolbarProps> = ({
           {/* Date From Filter */}
           <div className="flex items-center gap-2 shrink-0">
             <Label className="text-xs font-medium text-muted-foreground">Desde:</Label>
-            <Input 
-              type="date" 
-              className="h-9 w-[145px] text-xs" 
-              value={filters.dateFrom || ''} 
-              onChange={(e) => onFilterChange && onFilterChange('dateFrom', e.target.value)} 
+            <Input
+              type="date"
+              className="h-9 w-[145px] text-xs"
+              value={filters.dateFrom || ''}
+              onChange={(e) => onFilterChange && onFilterChange('dateFrom', e.target.value)}
             />
           </div>
 
           {/* Date To Filter */}
           <div className="flex items-center gap-2 shrink-0">
             <Label className="text-xs font-medium text-muted-foreground">Hasta:</Label>
-            <Input 
-              type="date" 
-              className="h-9 w-[145px] text-xs" 
-              value={filters.dateTo || ''} 
-              onChange={(e) => onFilterChange && onFilterChange('dateTo', e.target.value)} 
+            <Input
+              type="date"
+              className="h-9 w-[145px] text-xs"
+              value={filters.dateTo || ''}
+              onChange={(e) => onFilterChange && onFilterChange('dateTo', e.target.value)}
             />
           </div>
 
           {/* Items per page */}
           <div className="flex items-center gap-2 shrink-0 ml-auto lg:ml-0">
             <Label className="text-xs font-medium text-muted-foreground">Mostrar:</Label>
-            <Select 
-              value={itemsPerPage.toString()} 
+            <Select
+              value={itemsPerPage.toString()}
               onValueChange={(v) => onItemsPerPageChange && onItemsPerPageChange(Number(v))}
             >
               <SelectTrigger className="h-9 w-[70px] text-xs">

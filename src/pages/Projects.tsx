@@ -16,7 +16,8 @@ import { useProjects } from '@/hooks/project/useProjects';
 import { useDeleteProject } from '@/hooks/project/useDeleteProject';
 import { useToast } from '@/hooks/use-toast';
 import { FolderOpen, Calendar, Play, CheckCircle } from 'lucide-react';
-import { Project } from '@/types/project';
+import { Project, ProjectsResponse } from '@/types/project';
+import { User } from '@/types/user';
 
 export const Projects = () => {
   const { user } = useAuth();
@@ -26,8 +27,8 @@ export const Projects = () => {
 
   // State management
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState<{ manager?: string[]; status?: string[]; dateFrom?: string; dateTo?: string }>({ 
-    status: ['planned', 'active'], 
+  const [filters, setFilters] = useState<{ manager?: string[]; status?: string[]; dateFrom?: string; dateTo?: string }>({
+    status: ['planned', 'active'],
     manager: undefined // undefined means "All" (no filter applied)
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,55 +45,54 @@ export const Projects = () => {
   const { mutate: deleteProject, isPending: isDeleting } = useDeleteProject();
 
   // Normalize data
-  const rawProjects = projectsData as any;
   const allProjects = useMemo(() => {
     // Handle different API response structures
-    let projects = [];
-    if (Array.isArray(rawProjects)) {
-      projects = rawProjects;
-    } else if (rawProjects?.projects && Array.isArray(rawProjects.projects)) {
-      projects = rawProjects.projects;
-    } else if (rawProjects?.data && Array.isArray(rawProjects.data)) {
-      projects = rawProjects.data;
+    if (!projectsData) return [];
+
+    let projects: Project[] = [];
+    if (Array.isArray(projectsData)) {
+      projects = projectsData;
+    } else if (projectsData?.projects && Array.isArray(projectsData.projects)) {
+      projects = projectsData.projects;
     }
-    
+
     // Sort by createdAt descending to see new projects first
     return [...projects].sort((a: Project, b: Project) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
-  }, [rawProjects]);
+  }, [projectsData]);
 
-  const totalItems = rawProjects?.meta?.total ?? allProjects.length;
-  const totalPages = rawProjects?.meta?.total_pages ?? Math.ceil(totalItems / itemsPerPage);
+  const totalItems = (projectsData as ProjectsResponse)?.meta?.total ?? allProjects.length;
+  const totalPages = (projectsData as ProjectsResponse)?.meta?.total_pages ?? Math.ceil(totalItems / itemsPerPage);
   // Derive managers list for filter select
   const managers: { id: string; name: string }[] = Array.from(
     new Map(
       allProjects
         .map((p: Project) => p.manager)
-        .filter(Boolean)
-        .map((m: any) => [m.id, { id: m.id, name: m.name }])
+        .filter((m: User | undefined): m is User => !!m)
+        .map((m: User) => [m.id, { id: m.id, name: m.name }])
     ).values()
-  ) as { id: string; name: string }[];
+  );
 
   // Search and filter - with custom logic for nested fields and date search
   const filteredProjects = useMemo(() => {
     // Apply filters first
     let candidates = [...allProjects];
-    
+
     // Status filter
     if (filters?.status && filters.status.length > 0) {
       candidates = candidates.filter((p: Project) => {
         // If project has no status, show it if we are searching or if no specific status is required
         if (!p.status) return true;
-        
+
         const pStatus = p.status.toLowerCase();
         const isDelayed = pStatus === 'planned' && p.startDate && new Date(p.startDate) < new Date();
-        
+
         if (isDelayed && filters.status!.includes('delayed')) return true;
         if (pStatus === 'planned' && !isDelayed && filters.status!.includes('planned')) return true;
-        
+
         return filters.status!.some(s => s.toLowerCase() === pStatus && s !== 'delayed' && s !== 'planned');
       });
     }
@@ -115,11 +115,11 @@ export const Projects = () => {
     if (!searchTerm.trim()) return candidates;
 
     const term = searchTerm.toLowerCase();
-    
+
     // Normalize: remove accents/tildes
-    const normalize = (s: string | null | undefined) => 
+    const normalize = (s: string | null | undefined) =>
       (s || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
-    
+
     const normalizedTerm = normalize(term);
 
     // Month names for date search
@@ -151,20 +151,20 @@ export const Projects = () => {
       if (normalize(project.manager?.name).includes(normalizedTerm)) return true;
       // Search in creator name
       if (normalize(project.creator?.name).includes(normalizedTerm)) return true;
-      
+
       // Search in dates (multiple formats)
       if (project.startDate) {
         const startDateFormatted = normalize(getDateSearchValue(project.startDate));
         const startDateRaw = normalize(project.startDate);
         if (startDateFormatted.includes(normalizedTerm) || startDateRaw.includes(normalizedTerm)) return true;
       }
-      
+
       if (project.endDate) {
         const endDateFormatted = normalize(getDateSearchValue(project.endDate));
         const endDateRaw = normalize(project.endDate);
         if (endDateFormatted.includes(normalizedTerm) || endDateRaw.includes(normalizedTerm)) return true;
       }
-      
+
       return false;
     });
   }, [allProjects, searchTerm, filters]);
@@ -175,7 +175,7 @@ export const Projects = () => {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return filteredProjects.slice(start, end);
-  }, [filteredProjects, currentPage]);
+  }, [filteredProjects, currentPage, itemsPerPage]);
 
   // Compute total pages from filtered results
   const filteredTotalPages = Math.ceil(filteredProjects.length / itemsPerPage);
@@ -185,21 +185,21 @@ export const Projects = () => {
   if (searchTerm && searchTerm.trim().length > 0) {
     activeFilters.push(`Búsqueda: "${searchTerm.length > 20 ? searchTerm.slice(0, 20) + '…' : searchTerm}"`);
   }
-  
+
   if (filters?.status && filters.status.length > 0) {
     const s = filters.status;
     const isDefaultStatus = s.length === 2 && s.includes('planned') && s.includes('active');
-    
+
     if (!isDefaultStatus) {
       if (s.length === 5) {
         activeFilters.push('Estado: Todos');
       } else {
-        const mapName: Record<string,string> = { 
-          planned: 'Planificado', 
+        const mapName: Record<string, string> = {
+          planned: 'Planificado',
           delayed: 'Demorado',
-          active: 'En progreso', 
-          completed: 'Completado', 
-          cancelled: 'Cancelado' 
+          active: 'En progreso',
+          completed: 'Completado',
+          cancelled: 'Cancelado'
         };
         const names = s.map(st => mapName[st] || st).join(', ');
         activeFilters.push(`Estado: ${names}`);
@@ -271,10 +271,10 @@ export const Projects = () => {
         setDeleteConfirm({ isOpen: false });
         refetch();
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast({
           title: 'Error',
-          description: error?.message || 'Error al eliminar el proyecto',
+          description: error instanceof Error ? error.message : 'Error al eliminar el proyecto',
           variant: 'destructive',
         });
       },
@@ -327,7 +327,7 @@ export const Projects = () => {
       <PageLayout title="Proyectos" description="Gestión de proyectos y voluntarios">
         <StatsGrid stats={stats} columns={4} className="mb-6" isLoading={true} />
         <div className="space-y-6">
-        <ProjectsToolbar
+          <ProjectsToolbar
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             activeFilters={activeFilters}
@@ -388,8 +388,8 @@ export const Projects = () => {
           <Card className="shadow-soft border-accent/20 p-6">
             <CardHeader>
               <CardTitle>
-                {allProjects.length === 0 
-                  ? 'No hay proyectos aún' 
+                {allProjects.length === 0
+                  ? 'No hay proyectos aún'
                   : 'No se encontraron resultados'}
               </CardTitle>
             </CardHeader>

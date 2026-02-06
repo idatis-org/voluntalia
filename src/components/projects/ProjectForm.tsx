@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Project, CreateProjectDTO } from '@/types/project';
+import type { User } from '@/types/user';
 import { useCreateProject } from '@/hooks/project/useCreateProject';
 import { useUpdateProject } from '@/hooks/project/useUpdateProject';
 import { useUsers } from '@/hooks/user/useUsers';
@@ -42,12 +43,12 @@ export const ProjectForm = ({
 }: ProjectFormProps) => {
   const { user } = useAuth();
   const { data: usersData = [] } = useUsers();
-  
+
   // Filtrar solo project managers y coordinators
-  const managers = usersData.filter((u: any) => 
+  const managers = (usersData as User[]).filter((u: User) =>
     u.role === 'PROJECT_MANAGER' || u.role === 'COORDINATOR'
   );
-  
+
   const [formData, setFormData] = useState<CreateProjectDTO>({
     name: '',
     managerId: user?.id || '',
@@ -184,7 +185,7 @@ export const ProjectForm = ({
                 <SelectValue placeholder="Selecciona un project manager" />
               </SelectTrigger>
               <SelectContent>
-                {managers.map((manager: any) => (
+                {managers.map((manager: User) => (
                   <SelectItem key={manager.id} value={manager.id}>
                     {manager.name} ({manager.role === 'PROJECT_MANAGER' ? 'Project Manager' : 'Coordinador'})
                   </SelectItem>

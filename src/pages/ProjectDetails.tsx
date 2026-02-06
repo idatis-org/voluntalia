@@ -23,6 +23,7 @@ import { ProjectQuickStats } from '@/components/ProjectDetails/ProjectQuickStats
 import { ActivitiesTab } from '@/components/ProjectDetails/ActivitiesTab';
 import { VolunteersTab } from '@/components/ProjectDetails/VolunteersTab';
 import { TimelineTab } from '@/components/ProjectDetails/TimelineTab';
+import { ActivityTask } from '@/types/activity';
 
 const ProjectDetails = (): JSX.Element => {
   // Helper: Get Monday of the week containing a given date
@@ -77,9 +78,9 @@ const ProjectDetails = (): JSX.Element => {
   // Hardcoded pending entries for now (until endpoint is ready)
   const pendingForProject = useMemo(() => {
     if (!project?.activities || project.activities.length === 0) return [];
-    
+
     // Hardcoded mock data
-    const source: any[] = [
+    const source: { id: string; status: string; activity: { id: string; title: string }; activityTitle: string; notes: string; hours: { hours: number }; weekStart: string }[] = [
       {
         id: 'mock-1',
         status: 'pending',
@@ -90,7 +91,7 @@ const ProjectDetails = (): JSX.Element => {
         weekStart: new Date().toISOString(),
       },
     ];
-    
+
     if (project.activities.length > 1) {
       source.push({
         id: 'mock-2',
@@ -102,7 +103,7 @@ const ProjectDetails = (): JSX.Element => {
         weekStart: new Date().toISOString(),
       });
     }
-    
+
     return source;
   }, [project?.activities]);
 
@@ -119,7 +120,7 @@ const ProjectDetails = (): JSX.Element => {
     deleteProject(project.id, { onSuccess: () => navigate('/projects') });
   };
 
-  const handleViewLogs = (activity: any) => {
+  const handleViewLogs = (activity: ActivityTask) => {
     toast({ title: 'En desarrollo', description: 'Página de logs de actividad próximamente.' });
   };
 
