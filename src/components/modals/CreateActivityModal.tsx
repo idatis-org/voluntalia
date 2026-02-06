@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { FormEvent } from 'react';
 import { useCreateActivity } from '@/hooks/activity/useCreateActivity';
 import { useToast } from '@/hooks/use-toast';
@@ -17,12 +17,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
+import { ActivityTask } from '@/types/activity';
+
 interface CreateActivityModalProps {
   open: boolean;
   projectId?: string;
   projectStartDate?: string; // Fecha de inicio del proyecto (YYYY-MM-DD)
   onOpenChange: (open: boolean) => void;
-  onCreated?: (activity: any) => void;
+  onCreated?: (activity: ActivityTask) => void;
 }
 
 /**
@@ -49,19 +51,27 @@ export const CreateActivityModal = ({
   const { user } = useAuth();
   const { data } = useProjects();
   // `useProjects` may return an array (legacy) or an object { projects, meta }
-  const allProjects = Array.isArray(data) ? data : (data && typeof data === 'object' && 'projects' in data ? (data as any).projects : []);
+  const allProjects = useMemo(() => {
+    return Array.isArray(data)
+      ? data
+      : (data && typeof data === 'object' && 'projects' in data
+        ? (data as { projects: { id: string; name: string; managerId?: string; manager?: { id: string } }[] }).projects
+        : []);
+  }, [data]);
 
   const isCoordinator = user?.role === 'COORDINATOR';
   const isProjectManager = user?.role === 'PROJECT_MANAGER';
 
   // If user is project manager, determine their managed project
-  const managerProject = allProjects.find((p: any) => (p.managerId ?? p.manager?.id) === user?.id);
+  const managerProject = allProjects.find((p: { managerId?: string; manager?: { id: string }; id: string; name: string }) =>
+    (p.managerId ?? p.manager?.id) === user?.id
+  );
 
   // local state for selected project id (can be overridden by prop)
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(projectId ?? (isProjectManager ? managerProject?.id : undefined));
   // local editable input for project name to allow typing and searching
   const [projectInput, setProjectInput] = useState<string>(
-    allProjects.find((p: any) => p.id === (selectedProjectId ?? projectId))?.name ?? ''
+    allProjects.find((p: { id: string; name: string }) => p.id === (selectedProjectId ?? projectId))?.name ?? ''
   );
 
   useEffect(() => {
@@ -78,7 +88,7 @@ export const CreateActivityModal = ({
 
   // keep the editable project input in sync with selectedProjectId / projectId
   useEffect(() => {
-    const name = allProjects.find((p: any) => p.id === (selectedProjectId ?? projectId))?.name ?? '';
+    const name = allProjects.find((p: { id: string; name: string }) => p.id === (selectedProjectId ?? projectId))?.name ?? '';
     setProjectInput(name);
   }, [selectedProjectId, projectId, allProjects]);
 
@@ -112,14 +122,11 @@ export const CreateActivityModal = ({
 
     try {
       // Build payload — include projectId only if provided
-      const now = new Date().toISOString();
-      const payload: any = {
+      const payload: Omit<ActivityTask, 'id' | 'createdAt' | 'updatedAt'> = {
         title: formData.title,
         description: formData.description,
         date: formData.date,
         status: 'planned',
-        createdAt: now,
-        updatedAt: now,
       };
       const finalProjectId = selectedProjectId ?? projectId;
       if (finalProjectId) payload.projectId = finalProjectId;
@@ -137,8 +144,13 @@ export const CreateActivityModal = ({
       onOpenChange(false);
 
       if (onCreated) onCreated(created);
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error?.response?.data?.error || error?.message || 'No se pudo crear la actividad' });
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } }; message?: string };
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: err?.response?.data?.error || err?.message || 'No se pudo crear la actividad'
+      });
     }
   };
 
@@ -191,13 +203,13 @@ export const CreateActivityModal = ({
                   onChange={(e) => {
                     const name = e.target.value;
                     setProjectInput(name);
-                    const found = allProjects.find((p: any) => p.name === name);
+                    const found = allProjects.find((p: { name: string; id: string }) => p.name === name);
                     setSelectedProjectId(found ? found.id : undefined);
                     if (errors.project) setErrors({ ...errors, project: '' });
                   }}
                   placeholder="Type to search projects"
                 />
-                <datalist id="projects-list-modal">{allProjects.map((p: any) => <option key={p.id} value={p.name} />)}</datalist>
+                <datalist id="projects-list-modal">{allProjects.map((p: { id: string; name: string }) => <option key={p.id} value={p.name} />)}</datalist>
                 {errors.project && <p className="text-xs text-destructive">{errors.project}</p>}
               </div>
             ) : isProjectManager ? (
@@ -207,7 +219,7 @@ export const CreateActivityModal = ({
               </div>
             ) : projectId ? (
               <div>
-                <Input id="project" value={allProjects.find((p: any) => p.id === projectId)?.name ?? ''} disabled className="mt-1" />
+                <Input id="project" value={allProjects.find((p: { id: string; name: string }) => p.id === projectId)?.name ?? ''} disabled className="mt-1" />
               </div>
             ) : (
               <div className="flex flex-col">
@@ -219,13 +231,13 @@ export const CreateActivityModal = ({
                   onChange={(e) => {
                     const name = e.target.value;
                     setProjectInput(name);
-                    const found = allProjects.find((p: any) => p.name === name);
+                    const found = allProjects.find((p: { name: string; id: string }) => p.name === name);
                     setSelectedProjectId(found ? found.id : undefined);
                     if (errors.project) setErrors({ ...errors, project: '' });
                   }}
                   placeholder="(optional) Type to search projects"
                 />
-                <datalist id="projects-list-modal">{allProjects.map((p: any) => <option key={p.id} value={p.name} />)}</datalist>
+                <datalist id="projects-list-modal">{allProjects.map((p: { id: string; name: string }) => <option key={p.id} value={p.name} />)}</datalist>
               </div>
             )}
           </div>
@@ -233,7 +245,7 @@ export const CreateActivityModal = ({
           <DialogFooter className="pt-4">
             {/* react-query naming varies by version: normalize to a safe `isSubmitting` flag */}
             {(() => {
-              const isSubmitting = (createActivityMutation as any).isLoading ?? (createActivityMutation as any).isPending ?? false;
+              const isSubmitting = createActivityMutation.isPending || false;
               return (
                 <>
                   <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>

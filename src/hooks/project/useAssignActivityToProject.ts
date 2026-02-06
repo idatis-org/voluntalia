@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { assignActivityToProject } from '@/services/projectService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,14 +27,17 @@ export const useAssignActivityToProject = () => {
         description: 'La actividad ha sido vinculada al proyecto exitosamente',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
+      let description = 'No se pudo asignar la actividad';
+      if (isAxiosError(error)) {
+        description = error.response?.data?.message || error.message || description;
+      } else {
+        description = error.message || description;
+      }
       toast({
         variant: 'destructive',
         title: 'Error',
-        description:
-          error?.response?.data?.message ||
-          error.message ||
-          'No se pudo asignar la actividad',
+        description,
       });
     },
   });

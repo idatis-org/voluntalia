@@ -11,12 +11,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateWorkLog } from '@/hooks/workLog/useCreateWorkLog';
 import { ActivityTask } from '@/types/activity';
-import { Clock, CheckCircle, FileText, Calendar, Users } from 'lucide-react';
+import { Clock, CheckCircle, FileText, Calendar } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { getActivityStats } from '@/services/activityService';
 import { ActivityStats } from '@/types/activity';
+import { isAxiosError } from 'axios';
+import { CreateWorkLogDTO } from '@/types/workLog';
 
-interface ActivityFormData {
+interface ActivityFormData extends Record<string, unknown> {
   name: string;
   description: string;
   date: string;
@@ -74,8 +76,6 @@ export const useActivitiesPage = () => {
     itemsPerPage: 10,
   });
 
-  
-
   // Modals
   const createModal = useModal();
   const editModal = useModal<ActivityTask>();
@@ -94,7 +94,7 @@ export const useActivitiesPage = () => {
     return Object.keys(errors).length > 0 ? errors : null;
   };
 
-  const form = useFormData({
+  const form = useFormData<ActivityFormData>({
     initialValues: initialFormData,
     validate: validateForm,
   });
@@ -103,16 +103,23 @@ export const useActivitiesPage = () => {
   const logHoursModal = useModal<ActivityTask>();
   const createWorkLog = useCreateWorkLog();
 
-  const hoursFormInitial = {
+  interface HoursFormData extends Record<string, unknown> {
+    date: string;
+    hours: string;
+    description: string;
+    activity: ActivityTask | null;
+  }
+
+  const hoursFormInitial: HoursFormData = {
     date: new Date().toISOString().split('T')[0],
     hours: '',
     description: '',
-    activity: null as ActivityTask | null,
+    activity: null,
   };
 
-  const hoursForm = useFormData({
+  const hoursForm = useFormData<HoursFormData>({
     initialValues: hoursFormInitial,
-    validate: (data: any) => {
+    validate: (data: HoursFormData) => {
       const errors: Record<string, string> = {};
       if (!data.hours) errors.hours = 'Hours is required';
       if (!data.description || !data.description.trim()) errors.description = 'Description is required';
@@ -181,7 +188,7 @@ export const useActivitiesPage = () => {
   const { stats } = useStats(activities, statsConfig);
 
   // Server-provided aggregated stats (preferred). Fetch with same filters as UI.
-  const statsParams: Record<string, any> = {};
+  const statsParams: Record<string, string | number | boolean | undefined> = {};
   if (searchAndFilter.filters?.project && searchAndFilter.filters.project !== 'all') statsParams.projectId = searchAndFilter.filters.project;
   if (searchAndFilter.filters?.status && searchAndFilter.filters.status !== 'all') statsParams.status = searchAndFilter.filters.status;
   if (searchAndFilter.filters?.dateFrom) statsParams.dateFrom = searchAndFilter.filters.dateFrom;
@@ -201,12 +208,12 @@ export const useActivitiesPage = () => {
   const serverStats: ActivityStats | undefined = activityStatsQuery.data;
   const finalStats = serverStats
     ? [
-        { key: 'total', label: 'Total Activities', value: serverStats.total ?? 0, icon: FileText, color: 'text-primary' },
-        { key: 'active', label: 'Active', value: serverStats.statusCounts?.active ?? 0, icon: Calendar, color: 'text-amber-600' },
-        { key: 'completed', label: 'Completed', value: serverStats.statusCounts?.completed ?? 0, icon: CheckCircle, color: 'text-green-600' },
-        { key: 'upcoming', label: 'Upcoming (7d)', value: serverStats.upcoming7Days ?? 0, icon: Calendar, color: 'text-primary' },
-        { key: 'hours', label: 'Total Logged Hours', value: serverStats.totalLoggedHours ?? 0, icon: Clock, color: 'text-sky-600' },
-      ]
+      { key: 'total', label: 'Total Activities', value: serverStats.total ?? 0, icon: FileText, color: 'text-primary' },
+      { key: 'active', label: 'Active', value: serverStats.statusCounts?.active ?? 0, icon: Calendar, color: 'text-amber-600' },
+      { key: 'completed', label: 'Completed', value: serverStats.statusCounts?.completed ?? 0, icon: CheckCircle, color: 'text-green-600' },
+      { key: 'upcoming', label: 'Upcoming (7d)', value: serverStats.upcoming7Days ?? 0, icon: Calendar, color: 'text-primary' },
+      { key: 'hours', label: 'Total Logged Hours', value: serverStats.totalLoggedHours ?? 0, icon: Clock, color: 'text-sky-600' },
+    ]
     : stats;
 
   // Actions
@@ -230,7 +237,7 @@ export const useActivitiesPage = () => {
         date: new Date(form.formData.date).toISOString(),
         status: form.formData.status,
         projectId: form.formData.projectId || undefined,
-      } as any);
+      } as Omit<ActivityTask, 'id' | 'createdAt' | 'updatedAt'>);
 
       createModal.closeModal();
       form.resetForm();
@@ -239,15 +246,17 @@ export const useActivitiesPage = () => {
         description: 'Activity created successfully',
       });
     } catch (error) {
-      const status = (error as any)?.response?.status;
-      if (status === 409) {
-        form.setFieldError?.('name', 'Ya existe una actividad con ese nombre. Por favor cámbielo.');
-        toast({
-          title: 'Error',
-          description: 'Nombre duplicado. Cambia el nombre.',
-          variant: 'destructive',
-        });
-        return;
+      if (isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 409) {
+          form.setFieldError?.('name', 'Ya existe una actividad con ese nombre. Por favor cámbielo.');
+          toast({
+            title: 'Error',
+            description: 'Nombre duplicado. Cambia el nombre.',
+            variant: 'destructive',
+          });
+          return;
+        }
       }
 
       toast({
@@ -263,7 +272,7 @@ export const useActivitiesPage = () => {
       name: activity.title,
       description: activity.description || '',
       date: activity.date ? new Date(activity.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      status: (activity.status as any) || 'planned',
+      status: (activity.status as ActivityTask['status']) || 'planned',
       projectId: (activity.projectId as string) || '',
     });
     editModal.openModal(activity);
@@ -285,7 +294,7 @@ export const useActivitiesPage = () => {
 
     try {
       // Build payload without completedHours (must be updated via work_logs)
-      const payload: any = {
+      const payload: Partial<Omit<ActivityTask, 'id' | 'createdAt' | 'updatedAt'>> = {
         title: form.formData.name.trim(),
         description: form.formData.description.trim() || undefined,
         date: new Date(form.formData.date).toISOString(),
@@ -300,7 +309,7 @@ export const useActivitiesPage = () => {
       await updateActivity.mutateAsync({
         id: editModal.data.id,
         data: payload,
-      } as any);
+      });
 
       editModal.closeModal();
       form.resetForm();
@@ -309,15 +318,17 @@ export const useActivitiesPage = () => {
         description: 'Activity updated successfully',
       });
     } catch (error) {
-      const status = (error as any)?.response?.status;
-      if (status === 409) {
-        form.setFieldError?.('name', 'Ya existe una actividad con ese nombre. Por favor cámbielo.');
-        toast({
-          title: 'Error',
-          description: 'Nombre duplicado. Cambia el nombre.',
-          variant: 'destructive',
-        });
-        return;
+      if (isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 409) {
+          form.setFieldError?.('name', 'Ya existe una actividad con ese nombre. Por favor cámbielo.');
+          toast({
+            title: 'Error',
+            description: 'Nombre duplicado. Cambia el nombre.',
+            variant: 'destructive',
+          });
+          return;
+        }
       }
 
       toast({
@@ -377,7 +388,7 @@ export const useActivitiesPage = () => {
     }
 
     try {
-      const payload: any = {
+      const payload: CreateWorkLogDTO = {
         week_start: hoursForm.formData.date,
         hours: `${hoursForm.formData.hours} hours`,
         notes: hoursForm.formData.description,

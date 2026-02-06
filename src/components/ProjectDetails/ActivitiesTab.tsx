@@ -5,12 +5,14 @@ import { Project } from "@/types/project";
 import { WorkLog } from "@/types/workLog";
 import { ActivityCard } from "./ActivityCard";
 
+import { ActivityTask } from "@/types/activity";
+
 interface ActivitiesTabProps {
   project: Project;
   worklog: WorkLog[];
   onAddActivity: () => void;
   onLogHours: () => void;
-  onViewLogs: (activity: any) => void;
+  onViewLogs: (activity: ActivityTask) => void;
 }
 
 export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({

@@ -4,8 +4,8 @@ import { ActivityTask } from "@/types/activity";
 
 export const useUpdateActivity = () => {
   const queryClient = useQueryClient();
-  
-  return useMutation<ActivityTask, Error, { id: string; data: Partial<Omit<ActivityTask, "id">> }>(
+
+  return useMutation<ActivityTask, Error, { id: string; data: Partial<Omit<ActivityTask, "id" | "createdAt" | "updatedAt">> }>(
     {
       mutationFn: async ({ id, data }) => {
         console.log('[useUpdateActivity] mutate - ID:', id, 'STATUS in data:', data.status, 'full data:', data);
@@ -15,10 +15,10 @@ export const useUpdateActivity = () => {
         console.log('[useUpdateActivity] onSuccess updated:', updated, 'vars:', variables);
 
         // If backend returned full updated activity, update cache entry optimistically
-        if (updated && (updated as any).id) {
+        if (updated && updated.id) {
           try {
             queryClient.setQueryData<ActivityTask[] | undefined>(["activities"], (old) =>
-              old ? old.map((a) => ((a.id === (updated as any).id ? (updated as ActivityTask) : a))) : old
+              old ? old.map((a) => (a.id === updated.id ? updated : a)) : old
             );
           } catch (e) {
             // ignore
@@ -26,8 +26,8 @@ export const useUpdateActivity = () => {
 
           // Invalidate related queries to ensure fresh data where needed
           queryClient.invalidateQueries({ queryKey: ["activities"] });
-          if ((updated as any).projectId) {
-            queryClient.invalidateQueries({ queryKey: ["projects", (updated as any).projectId] });
+          if (updated.projectId) {
+            queryClient.invalidateQueries({ queryKey: ["projects", updated.projectId] });
           }
           queryClient.invalidateQueries({ queryKey: ["projects"] });
           return;
@@ -50,7 +50,7 @@ export const useUpdateActivity = () => {
         queryClient.invalidateQueries({ queryKey: ["activities"] });
         const activitiesRefetch = await queryClient.refetchQueries({ queryKey: ["activities"] });
         console.log('[useUpdateActivity] after refetchQueries activities:', activitiesRefetch);
-        
+
         // Verify that the activity was actually updated by checking the new data
         const newActivities = queryClient.getQueryData<ActivityTask[] | undefined>(["activities"]);
         const updatedActivityData = newActivities?.find(a => a.id === variables?.id);

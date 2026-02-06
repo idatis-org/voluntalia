@@ -18,9 +18,9 @@ export const getActivities = async (): Promise<ActivityTask[]> => {
 };
 
 export const createActivity = async (
-  activity: Omit<ActivityTask, 'id'>
+  activity: Omit<ActivityTask, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<ActivityTask> => {
-  const payload = snakeifyKeys(activity as any);
+  const payload = snakeifyKeys(activity);
   const response = await api.post<{ activity: ActivityTask }>(
     `${ENDPOINTS.ACTIVITIES}/create`,
     payload
@@ -31,10 +31,10 @@ export const createActivity = async (
 
 export const updateActivity = async (
   id: string,
-  activity: Partial<Omit<ActivityTask, 'id'>>
+  activity: Partial<Omit<ActivityTask, 'id' | 'createdAt' | 'updatedAt'>>
 ): Promise<ActivityTask> => {
-  const payload = snakeifyKeys(activity as any);
-  console.log('[activityService] updateActivity REQUEST - id:', id, 'status sent:', (activity as any).status, 'full payload:', payload);
+  const payload = snakeifyKeys(activity);
+  console.log('[activityService] updateActivity REQUEST - id:', id, 'status sent:', activity.status, 'full payload:', payload);
   const response = await api.put<{ activity: ActivityTask }>(
     `${ENDPOINTS.ACTIVITIES}/${id}`,
     payload
@@ -78,9 +78,9 @@ export const getVolunteersByActivity = async (
   return response.data.volunteers;
 };
 
-export const getActivityStats = async (params?: Record<string, any>): Promise<ActivityStats> => {
+export const getActivityStats = async (params?: Record<string, unknown>): Promise<ActivityStats> => {
   // params can include projectId, status, dateFrom, dateTo, search, userId, userScoped
-  const query = new URLSearchParams(params || {}).toString();
+  const query = params ? new URLSearchParams(params as Record<string, string>).toString() : '';
   const url = `${ENDPOINTS.ACTIVITIES}/stats${query ? `?${query}` : ''}`;
   const response = await api.get(url);
   // Convert keys to camelCase to match frontend types

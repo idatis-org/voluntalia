@@ -11,7 +11,10 @@ export interface ActivityTask {
   date: string; // YYYY-MM-DD (backend stores DATEONLY)
   projectId?: string;
   project_id?: string;
-  createdBy?: string;
+  createdBy?: string | {
+    id: string;
+    name: string;
+  };
   created_by?: {
     id: string;
     name: string;
