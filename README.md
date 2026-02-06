@@ -13,6 +13,13 @@ Construida con **React**, se conecta a la API de VoluntALIA para mostrar y admin
 
 ---
 
+## ⚙️ Requisitos previos
+Antes de iniciar, asegúrate de tener instalado:
+
+1. [Node.js](https://nodejs.org/) (v20.17.0) 
+
+---
+
 ## ⚙️ Instalación y ejecución
 
 1. Instala las dependencias:

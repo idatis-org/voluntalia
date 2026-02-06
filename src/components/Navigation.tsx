@@ -14,6 +14,7 @@ export const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation(); // 👈 para saber la ruta actual
 
+
   const src_voluntalia_logo = "public/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
 
   const navItems = useMemo(() => [
@@ -93,8 +94,8 @@ export const Navigation = () => {
                     key={item.name}
                     to={item.href}
                     className={({ isActive }) => `px-2 md:px-3 py-2 rounded-md text-sm font-medium flex items-center md:space-x-2 transition-smooth ${isActive
-                        ? "bg-gradient-primary text-primary-foreground shadow-soft"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      ? "bg-gradient-primary text-primary-foreground shadow-soft"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                       }`}
                     aria-label={item.name}
                     title={item.name}
@@ -185,8 +186,8 @@ export const Navigation = () => {
                     to={item.href}
                     onClick={() => setIsOpen(false)}
                     className={({ isActive }) => `px-3 py-3 rounded-md text-base font-medium flex items-center space-x-3 transition-smooth ${isActive
-                        ? "bg-gradient-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      ? "bg-gradient-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                       }`}
                   >
                     <Icon className="h-5 w-5" />

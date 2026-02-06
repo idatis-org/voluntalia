@@ -1,10 +1,8 @@
 import api from '@/api/axios';
-import { ActivityTask, Volunteer, ActivityStats } from '@/types/activity';
+import { ENDPOINTS } from '@/api/endpoints';
+import { ActivityTask, Volunteer, ActivityStats, VolunteersByActivity } from '@/types/activity';
 import { camelizeKeys, snakeifyKeys } from '@/lib/caseUtils';
 
-const ENDPOINTS = {
-  ACTIVITIES: '/activity',
-};
 
 export const getActivities = async (): Promise<ActivityTask[]> => {
   console.log('[activityService] getActivities request START');

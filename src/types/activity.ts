@@ -41,6 +41,12 @@ export interface Volunteer {
   hoursContributed?: number; // Horas que contribuyó este voluntario
 }
 
+export interface VolunteersByActivity {
+  id: string;
+  name: string;
+  email: string;
+}
+
 // Activity stats returned by GET /activity/stats
 export interface ActivityStats {
   total: number;
