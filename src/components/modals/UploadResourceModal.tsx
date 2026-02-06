@@ -10,10 +10,26 @@ import { Progress } from "@/components/ui/progress";
 import { X, Upload, File, FileText, Video, BookOpen, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+interface Resource {
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+  category: string;
+  format: string;
+  size: string;
+  downloads: number;
+  uploadDate: string;
+  tags: string[];
+  fileName?: string;
+  visibility?: string;
+  permissions?: string;
+}
+
 interface UploadResourceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpload?: (resource: any) => void;
+  onUpload?: (resource: Resource) => void;
 }
 
 const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceModalProps) => {
@@ -24,7 +40,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
-  
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -43,7 +59,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
       let type = "document";
       if (["mp4", "avi", "mov", "wmv"].includes(extension || "")) type = "video";
       if (["xlsx", "xls", "docx", "pptx"].includes(extension || "")) type = "template";
-      
+
       setFormData(prev => ({
         ...prev,
         type,
@@ -97,7 +113,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       setUploadProgress(100);
-      
+
       const newResource = {
         ...formData,
         id: Date.now(),
@@ -173,7 +189,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>File Upload *</Label>
-              <div 
+              <div
                 className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-smooth"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -216,13 +232,13 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
           {/* Resource Details */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Resource Details</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Enter resource title..."
                 required
               />
@@ -233,7 +249,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe what this resource contains and how it helps volunteers..."
                 rows={3}
                 required
@@ -243,7 +259,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -256,10 +272,10 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="type">Resource Type</Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
+                <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -277,7 +293,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
           {/* Tags */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Tags & Permissions</h3>
-            
+
             <div className="space-y-2">
               <Label>Tags</Label>
               <div className="flex space-x-2">
@@ -312,7 +328,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="visibility">Visibility</Label>
-                <Select value={formData.visibility} onValueChange={(value) => setFormData({...formData, visibility: value})}>
+                <Select value={formData.visibility} onValueChange={(value) => setFormData({ ...formData, visibility: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -323,10 +339,10 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload }: UploadResourceMod
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="permissions">Download Permissions</Label>
-                <Select value={formData.permissions} onValueChange={(value) => setFormData({...formData, permissions: value})}>
+                <Select value={formData.permissions} onValueChange={(value) => setFormData({ ...formData, permissions: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

@@ -13,10 +13,25 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
+interface Event {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  volunteers: number;
+  maxVolunteers: number;
+  category: string;
+  status: string;
+  organizer: string;
+  recurring?: boolean;
+}
+
 interface CreateEventModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate?: (event: any) => void;
+  onCreate?: (event: Event) => void;
 }
 
 const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProps) => {
@@ -24,7 +39,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
   const [isLoading, setIsLoading] = useState(false);
   const [date, setDate] = useState<Date>();
   const [recurring, setRecurring] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -56,7 +71,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       const newEvent = {
         ...formData,
         id: Date.now(),
@@ -120,13 +135,13 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
           {/* Basic Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Event Details</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="title">Event Title *</Label>
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Enter event title..."
                 required
               />
@@ -137,7 +152,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe the event and what volunteers will do..."
                 rows={3}
                 required
@@ -147,7 +162,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -161,7 +176,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="maxVolunteers">Max Volunteers *</Label>
                 <Input
@@ -170,7 +185,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
                   min="1"
                   max="100"
                   value={formData.maxVolunteers}
-                  onChange={(e) => setFormData({...formData, maxVolunteers: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, maxVolunteers: e.target.value })}
                   placeholder="20"
                   required
                 />
@@ -181,7 +196,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
           {/* Date & Time */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Schedule</h3>
-            
+
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Date *</Label>
@@ -217,7 +232,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
                   id="startTime"
                   type="time"
                   value={formData.startTime}
-                  onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                   required
                 />
               </div>
@@ -228,7 +243,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
                   id="endTime"
                   type="time"
                   value={formData.endTime}
-                  onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                   required
                 />
               </div>
@@ -247,13 +262,13 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
           {/* Location */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Location & Requirements</h3>
-            
+
             <div className="space-y-2">
               <Label htmlFor="location">Location *</Label>
               <Input
                 id="location"
                 value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="123 Main St, City, State 12345"
                 required
               />
@@ -264,7 +279,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
               <Textarea
                 id="requirements"
                 value={formData.requirements}
-                onChange={(e) => setFormData({...formData, requirements: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
                 placeholder="Any special requirements or skills needed..."
                 rows={2}
               />
@@ -275,7 +290,7 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
               <Textarea
                 id="materials"
                 value={formData.materials}
-                onChange={(e) => setFormData({...formData, materials: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
                 placeholder="What materials or equipment will be provided..."
                 rows={2}
               />
@@ -285,35 +300,35 @@ const CreateEventModal = ({ open, onOpenChange, onCreate }: CreateEventModalProp
           {/* Contact Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Contact Information</h3>
-            
+
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="contactPerson">Contact Person</Label>
                 <Input
                   id="contactPerson"
                   value={formData.contactPerson}
-                  onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                   placeholder="Event organizer name"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="contactEmail">Contact Email</Label>
                 <Input
                   id="contactEmail"
                   type="email"
                   value={formData.contactEmail}
-                  onChange={(e) => setFormData({...formData, contactEmail: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                   placeholder="organizer@idatis.org"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="contactPhone">Contact Phone</Label>
                 <Input
                   id="contactPhone"
                   value={formData.contactPhone}
-                  onChange={(e) => setFormData({...formData, contactPhone: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
                   placeholder="(555) 123-4567"
                 />
               </div>

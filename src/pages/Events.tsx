@@ -11,14 +11,28 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import CreateEventModal from "@/components/modals/CreateEventModal";
 import { useToast } from "@/hooks/use-toast";
 
+interface Event {
+  id: number;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  volunteers: number;
+  maxVolunteers: number;
+  category: string;
+  status: string;
+  organizer: string;
+}
+
 const Events = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
   const [createEventOpen, setCreateEventOpen] = useState(false);
-  const [events, setEvents] = useState([
+  const [events, setEvents] = useState<Event[]>([
 
-  
+
     {
       id: 1,
       title: "Community Food Drive",
@@ -86,13 +100,13 @@ const Events = () => {
     }
   ]);
 
-  const handleCreateEvent = (newEvent: any) => {
+  const handleCreateEvent = (newEvent: Event) => {
     setEvents(prev => [...prev, newEvent]);
   };
 
   const handleJoinEvent = (eventId: number) => {
-    setEvents(prev => prev.map(event => 
-      event.id === eventId 
+    setEvents(prev => prev.map(event =>
+      event.id === eventId
         ? { ...event, volunteers: event.volunteers + 1, status: event.volunteers + 1 >= event.maxVolunteers ? 'full' : event.status }
         : event
     ));
@@ -132,12 +146,12 @@ const Events = () => {
   const filterEvents = (status: string) => {
     return events.filter(event => {
       const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           event.location.toLowerCase().includes(searchTerm.toLowerCase());
-      
+        event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesFilter = filterBy === "all" || event.category === filterBy;
       const matchesStatus = status === "all" || event.status === status;
-      
+
       return matchesSearch && matchesFilter && matchesStatus;
     });
   };
@@ -229,7 +243,7 @@ const Events = () => {
                   <SelectItem value="environment">Environment</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
+              <Button
                 onClick={() => setCreateEventOpen(true)}
                 className="bg-gradient-primary hover:shadow-hover transition-smooth"
               >
@@ -299,8 +313,8 @@ const Events = () => {
                           <Button variant="outline" size="sm">
                             View Details
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             onClick={() => handleJoinEvent(event.id)}
                             disabled={event.status === 'full'}
                           >
@@ -322,7 +336,7 @@ const Events = () => {
                                 Manage Participants
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => handleDeleteEvent(event.id)}
                                 className="text-destructive focus:text-destructive"
                               >
@@ -420,7 +434,7 @@ const Events = () => {
                       <div className="flex items-center space-x-2 text-sm">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          {event.status === 'completed' 
+                          {event.status === 'completed'
                             ? `${event.volunteers} volunteers participated`
                             : `${event.volunteers}/${event.maxVolunteers} volunteers`
                           }
@@ -449,8 +463,8 @@ const Events = () => {
           </TabsContent>
         </Tabs>
       </main>
-      
-      <CreateEventModal 
+
+      <CreateEventModal
         open={createEventOpen}
         onOpenChange={setCreateEventOpen}
         onCreate={handleCreateEvent}

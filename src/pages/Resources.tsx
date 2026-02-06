@@ -11,14 +11,27 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import UploadResourceModal from "@/components/modals/UploadResourceModal";
 import { useToast } from "@/hooks/use-toast";
 
+interface Resource {
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+  category: string;
+  format: string;
+  size: string;
+  downloads: number;
+  uploadDate: string;
+  tags: string[];
+}
+
 const Resources = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [resources, setResources] = useState([
+  const [resources, setResources] = useState<Resource[]>([
 
-  
+
     {
       id: 1,
       title: "Volunteer Handbook 2024",
@@ -93,7 +106,7 @@ const Resources = () => {
     }
   ]);
 
-  const handleUploadResource = (newResource: any) => {
+  const handleUploadResource = (newResource: Resource) => {
     setResources(prev => [...prev, newResource]);
   };
 
@@ -105,10 +118,10 @@ const Resources = () => {
     });
   };
 
-  const handleDownloadResource = (resource: any) => {
+  const handleDownloadResource = (resource: Resource) => {
     // In real implementation, this would trigger actual download
-    setResources(prev => prev.map(r => 
-      r.id === resource.id 
+    setResources(prev => prev.map(r =>
+      r.id === resource.id
         ? { ...r, downloads: r.downloads + 1 }
         : r
     ));
@@ -139,11 +152,11 @@ const Resources = () => {
 
   const filteredResources = resources.filter(resource => {
     const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+      resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
     const matchesFilter = filterBy === "all" || resource.category === filterBy;
-    
+
     return matchesSearch && matchesFilter;
   });
 
@@ -234,7 +247,7 @@ const Resources = () => {
                   <SelectItem value="safety">Safety</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
+              <Button
                 onClick={() => setUploadModalOpen(true)}
                 className="bg-gradient-primary hover:shadow-hover transition-smooth"
               >
@@ -299,8 +312,8 @@ const Resources = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             Preview
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             className="flex-1"
                             onClick={() => handleDownloadResource(resource)}
                           >
@@ -323,7 +336,7 @@ const Resources = () => {
                                 Share Link
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => handleDeleteResource(resource.id)}
                                 className="text-destructive focus:text-destructive"
                               >
@@ -508,8 +521,8 @@ const Resources = () => {
           </TabsContent>
         </Tabs>
       </main>
-      
-      <UploadResourceModal 
+
+      <UploadResourceModal
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         onUpload={handleUploadResource}
