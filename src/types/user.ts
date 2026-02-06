@@ -7,6 +7,7 @@ export interface User {
   phone: string;
   country: string;
   city: string;
+  isActive: boolean;
   role?: string; // 'COORDINATOR' | 'PROJECT_MANAGER' | 'VOLUNTEER' | 'LEGAL'
   project_id?: string | null; // Presente si user es PROJECT_MANAGER
   volunteerActivities?: ActivityTask[] | null;

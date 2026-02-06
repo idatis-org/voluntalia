@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import ForgotPasswordModal from "@/components/modals/ForgotPasswordModal";
 import { useToast } from "@/hooks/use-toast";
+import { isAxiosError } from "axios";
 
 const Login = () => {
   const { toast } = useToast();
@@ -27,24 +28,28 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  var src_voluntalia_logo = "public/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
+  const src_voluntalia_logo = "public/voluntalia_thumbnail_" + localStorage.getItem('theme') + ".png";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       const data = await loginUser({ email, password });
-      login(data); 
+      login(data);
       navigate("/");
-    } catch (err) { 
+    } catch (err) {
       console.log(err);
+      let errorMessage = "Invalid credentials";
+      if (isAxiosError(err) && err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      }
       toast({
-        variant: "destructive",   // rojo por defecto
+        variant: "destructive",
         title: "Login failed",
         duration: 3000,
-        description: err.response.data.error || "Invalid credentials",
+        description: errorMessage,
       });
-    }finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -101,11 +106,11 @@ const Login = () => {
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember" 
+                <Checkbox
+                  id="remember"
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked === true)}
                 />
@@ -120,8 +125,8 @@ const Login = () => {
               </button>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-gradient-primary hover:shadow-hover transition-smooth"
               disabled={isLoading}
             >
@@ -130,8 +135,8 @@ const Login = () => {
           </form>
         </CardContent>
       </Card>
-      
-      <ForgotPasswordModal 
+
+      <ForgotPasswordModal
         open={forgotPasswordOpen}
         onOpenChange={setForgotPasswordOpen}
       />

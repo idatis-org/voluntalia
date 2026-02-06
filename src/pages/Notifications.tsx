@@ -13,8 +13,20 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, Plus, Users, Globe, AlertCircle, Info, CheckCircle, Clock, Send, Calendar } from "lucide-react";
 
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "success" | "event";
+  recipient: "everyone" | "specific";
+  sender: string;
+  createdAt: string;
+  read: boolean;
+  recipientUsers?: string[];
+}
+
 // Mock data for notifications
-const mockNotifications = [
+const mockNotifications: Notification[] = [
   {
     id: 1,
     title: "System Update Scheduled",
@@ -69,14 +81,20 @@ const mockUsers = [
 
 const Notifications = () => {
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newNotification, setNewNotification] = useState({
+  const [newNotification, setNewNotification] = useState<{
+    title: string;
+    message: string;
+    type: "info" | "warning" | "success" | "event";
+    recipient: "everyone" | "specific";
+    selectedUsers: number[];
+  }>({
     title: "",
     message: "",
-    type: "info" as "info" | "warning" | "success" | "event",
-    recipient: "everyone" as "everyone" | "specific",
-    selectedUsers: [] as number[]
+    type: "info",
+    recipient: "everyone",
+    selectedUsers: []
   });
 
   const getNotificationIcon = (type: string) => {
@@ -126,7 +144,7 @@ const Notifications = () => {
       sender: "Current User", // In real app, this would be the authenticated user
       createdAt: new Date().toISOString(),
       read: false,
-      recipientUsers: newNotification.recipient === "specific" 
+      recipientUsers: newNotification.recipient === "specific"
         ? newNotification.selectedUsers.map(id => mockUsers.find(u => u.id === id)?.name || "")
         : undefined
     };
@@ -148,8 +166,8 @@ const Notifications = () => {
   };
 
   const markAsRead = (id: number) => {
-    setNotifications(prev => 
-      prev.map(notif => 
+    setNotifications(prev =>
+      prev.map(notif =>
         notif.id === id ? { ...notif, read: true } : notif
       )
     );
@@ -162,7 +180,7 @@ const Notifications = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -171,7 +189,7 @@ const Notifications = () => {
               Manage and view all notifications ({unreadCount} unread)
             </p>
           </div>
-          
+
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="shadow-soft">
@@ -186,7 +204,7 @@ const Notifications = () => {
                   Send a notification to users in the system.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
@@ -197,7 +215,7 @@ const Notifications = () => {
                     placeholder="Enter notification title"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="message">Message *</Label>
                   <Textarea
@@ -208,12 +226,12 @@ const Notifications = () => {
                     rows={3}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="type">Type</Label>
-                  <Select 
-                    value={newNotification.type} 
-                    onValueChange={(value) => setNewNotification(prev => ({ ...prev, type: value as any }))}
+                  <Select
+                    value={newNotification.type}
+                    onValueChange={(value) => setNewNotification(prev => ({ ...prev, type: value as Notification["type"] }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -226,14 +244,14 @@ const Notifications = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="recipient">Recipients</Label>
-                  <Select 
-                    value={newNotification.recipient} 
-                    onValueChange={(value) => setNewNotification(prev => ({ 
-                      ...prev, 
-                      recipient: value as any,
+                  <Select
+                    value={newNotification.recipient}
+                    onValueChange={(value) => setNewNotification(prev => ({
+                      ...prev,
+                      recipient: value as Notification["recipient"],
                       selectedUsers: value === "everyone" ? [] : prev.selectedUsers
                     }))}
                   >
@@ -246,7 +264,7 @@ const Notifications = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 {newNotification.recipient === "specific" && (
                   <div className="space-y-2">
                     <Label>Select Users</Label>
@@ -280,7 +298,7 @@ const Notifications = () => {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Cancel
