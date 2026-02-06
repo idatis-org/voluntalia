@@ -5,7 +5,7 @@ interface StatItem {
   key: string;
   label: string;
   value: number | string;
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<{ className?: string }>;
   color?: string;
 }
 
@@ -17,8 +17,8 @@ interface StatsGridProps {
   isError?: boolean;
 }
 
-export const StatsGrid: React.FC<StatsGridProps> = ({ 
-  stats, 
+export const StatsGrid: React.FC<StatsGridProps> = ({
+  stats,
   className = "",
   columns = 4,
   isLoading = false,
@@ -26,7 +26,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
 }) => {
   const gridCols = {
     2: "grid-cols-1 md:grid-cols-2",
-    3: "grid-cols-1 md:grid-cols-3", 
+    3: "grid-cols-1 md:grid-cols-3",
     4: "grid-cols-1 md:grid-cols-4",
     5: "grid-cols-1 md:grid-cols-5"
   }[columns] || "grid-cols-1 md:grid-cols-4";

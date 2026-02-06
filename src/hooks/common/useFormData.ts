@@ -6,7 +6,7 @@ export interface UseFormDataOptions<T> {
   validate?: (data: T) => Record<string, string> | null;
 }
 
-export const useFormData = <T extends Record<string, any>>({
+export const useFormData = <T extends Record<string, unknown>>({
   initialValues,
   onSubmit,
   validate
@@ -15,7 +15,7 @@ export const useFormData = <T extends Record<string, any>>({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const updateField = useCallback((field: keyof T, value: any) => {
+  const updateField = useCallback(<K extends keyof T>(field: K, value: T[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when field is updated
     if (errors[field as string]) {
@@ -46,13 +46,13 @@ export const useFormData = <T extends Record<string, any>>({
 
   const validateForm = useCallback(() => {
     if (!validate) return true;
-    
+
     const validationErrors = validate(formData);
     if (validationErrors) {
       setErrors(validationErrors);
       return false;
     }
-    
+
     setErrors({});
     return true;
   }, [formData, validate]);

@@ -7,13 +7,13 @@ interface UseSearchAndFilterOptions<T> {
   itemsPerPage?: number;
 }
 
-interface FilterConfig {
+interface FilterConfig<T> {
   key: string;
   value: string;
-  matcher: (item: any, value: string) => boolean;
+  matcher: (item: T, value: string) => boolean;
 }
 
-export const useSearchAndFilter = <T>({
+export const useSearchAndFilter = <T extends object>({
   data,
   searchFields,
   defaultFilter = 'all',
@@ -75,7 +75,7 @@ export const useSearchAndFilter = <T>({
       const threshold = Math.max(1, Math.floor(p.length * 0.34));
       return dist <= threshold;
     };
-    
+
     // Map status values to their display names
     const statusMap: Record<string, string> = {
       'completed': 'completada',
@@ -101,28 +101,30 @@ export const useSearchAndFilter = <T>({
         return dateStr;
       }
     };
-    
+
     return data.filter(item => {
+      const it = item as Record<string, unknown>;
       // Apply filters first
       if (filters.project && filters.project !== 'all') {
-        const projId = (item as any).project?.id || (item as any).projectId || '';
+        const project = it.project as Record<string, unknown> | undefined;
+        const projId = project?.id || it.projectId || '';
         if (projId !== filters.project) return false;
       }
 
       if (filters.status && filters.status !== 'all') {
-        const st = (item as any).status || 'planned';
+        const st = (it.status as string) || 'planned';
         if (st !== filters.status) return false;
       }
 
       if (filters.dateFrom || filters.dateTo) {
-        const itemDate = new Date((item as any).date || (item as any).createdAt || null);
+        const itemDate = new Date((it.date as string) || (it.createdAt as string) || '');
         if (filters.dateFrom) {
           const from = new Date(filters.dateFrom);
           if (itemDate < from) return false;
         }
         if (filters.dateTo) {
           const to = new Date(filters.dateTo);
-          to.setHours(23,59,59,999);
+          to.setHours(23, 59, 59, 999);
           if (itemDate > to) return false;
         }
       }
@@ -131,11 +133,11 @@ export const useSearchAndFilter = <T>({
 
       // Search logic with fuzzy matching
       const matchesSearch = searchFields.some(field => {
-        const value = (item as any)[field];
+        const value = it[field as string];
 
         if (typeof value === 'string') {
           // For date fields, search in formatted date with month names
-          if (field === 'date' || field === 'createdAt' || field === 'updatedAt') {
+          if (field === 'date' || (field as string) === 'createdAt' || (field as string) === 'updatedAt') {
             const ds = getDateSearchValue(value).toLowerCase();
             return fuzzyMatch(ds, searchLower) || fuzzyMatch(value.toLowerCase(), searchLower);
           }
@@ -149,15 +151,15 @@ export const useSearchAndFilter = <T>({
         }
         return false;
       }) ||
-      // Also search in nested fields like project.name, created_by.name
-      (
-        fuzzyMatch(((item as any).project?.name || ''), searchLower) ||
-        fuzzyMatch(((item as any).createdBy?.name || ''), searchLower) ||
-        fuzzyMatch(((item as any).created_by?.name || ''), searchLower) ||
-        String((item as any).completed_hours || (item as any).completedHours || '').includes(searchLower) ||
-        // Search by status display names (Completada, En curso, etc)
-        (statusMap[(item as any).status] || '').includes(searchLower)
-      );
+        // Also search in nested fields like project.name, created_by.name
+        (
+          fuzzyMatch(((it.project as Record<string, string>)?.name || ''), searchLower) ||
+          fuzzyMatch(((it.createdBy as Record<string, string>)?.name || ''), searchLower) ||
+          fuzzyMatch(((it.created_by as Record<string, string>)?.name || ''), searchLower) ||
+          String(it.completed_hours || it.completedHours || '').includes(searchLower) ||
+          // Search by status display names (Completada, En curso, etc)
+          (statusMap[it.status as string] || '').includes(searchLower)
+        );
 
       return matchesSearch;
     });
@@ -181,13 +183,13 @@ export const useSearchAndFilter = <T>({
     searchTerm,
     filters,
     currentPage,
-    
+
     // Data
     filteredData,
     paginatedData,
     totalItems,
     totalPages,
-    
+
     // Actions
     setSearchTerm,
     setMainFilter,
