@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Filter, FileText, Download, ExternalLink, BookOpen, Video, File, Plus, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import { Search, Filter, FileText, Download, Eye, Video, BookOpen, File, Plus, MoreHorizontal, ExternalLink, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import UploadResourceModal from "@/components/modals/UploadResourceModal";
 import { useToast } from "@/hooks/use-toast";
@@ -25,81 +25,85 @@ const Resources = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
   const { data: categories = [] } = useResourceCategory();
   const { data: types = [] } = useResourceType();
   const { data: resources = [] } = useResource();
-  const [_, setResources] = useState<Resource[]>(resources);
   const { mutate: download, isPending } = useDownloadResource();
   const confirmDialog = useConfirmDialog();
   const deleteResource = useDeleteResource();
   const { user } = useAuth();
 
   const counts = resources.reduce<Record<string, number>>((acc, r) => {
-    acc[r.resource_type_id] = (acc[r.resource_type_id] || 0) + 1;
+    if (r.resource_type_id) {
+      acc[r.resource_type_id] = (acc[r.resource_type_id] || 0) + 1;
+    }
     return acc;
   }, {});
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+  const formatFileSize = (bytes: number | string | undefined) => {
+    if (!bytes) return 'N/A';
+    const numBytes = typeof bytes === 'string' ? parseInt(bytes) : bytes;
+    if (isNaN(numBytes)) return bytes;
+    if (numBytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const i = Math.floor(Math.log(numBytes) / Math.log(k));
+    return parseFloat((numBytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handlePreviewResource = (resource: Resource) => {
     if (!resource.storage_path) return;
 
     const cleaned = resource.storage_path
-      .replace(/\\/g, '/')               
-      .replace(/^https?:\/+/, '')        
-      .replace(/^\/+/, '');              
+      .replace(/\\/g, '/')
+      .replace(/^https?:\/+/, '')
+      .replace(/^\/+/, '');
 
     const absoluteUrl = `http://${cleaned}`;
 
     window.open(absoluteUrl, '_blank');
   };
 
-  const handleUploadResource = (newResource: Resource) => {
-    setResources(prev => [...prev, newResource]);
+  const handleUploadResource = (_newResource: any) => {
+    // Resources are handled by the useResource hook and the modal's internal logic
+    setUploadModalOpen(false);
   };
 
   const handleDeleteResource = async (resource: Resource) => {
-      if(resource) {
-        confirmDialog.showDialog({
-          title: 'Delete Resource',
-          description: `Are you sure you want to delete "${resource.filename}"? This action cannot be undone.`,
-          confirmText: 'Delete',
-          variant: 'destructive',
-          onConfirm: async () => {
-            if(resource.user_id !== user?.id){
-              toast({
-                title: "Unauthorized",
-                description: "You do not have permission to delete this resource.",
-                variant: "destructive"
-              });
-              return;
-            }
-            try{
-              await deleteResource.mutateAsync(resource.id);
-              toast({
-                title: "Resource Deleted",
-                description: "Resource has been removed."
-              });
-            }catch (error) {
-              toast({
-                title: "Error",
-                description: "Failed to delete resource. Please try again.",
-                variant: "destructive"
-              });
-            }
-          },
-        });
-      }
+    confirmDialog.showDialog({
+      title: 'Delete Resource',
+      description: `Are you sure you want to delete "${resource.filename}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'destructive',
+      onConfirm: async () => {
+        if (resource.user_id !== user?.id) {
+          toast({
+            title: "Unauthorized",
+            description: "You do not have permission to delete this resource.",
+            variant: "destructive"
+          });
+          return;
+        }
+        try {
+          await deleteResource.mutateAsync(resource.id);
+          toast({
+            title: "Resource Deleted",
+            description: "Resource has been removed."
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to delete resource. Please try again.",
+            variant: "destructive"
+          });
+        }
+      },
+    });
   };
 
   const getTypeIcon = (type: string) => {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'document': return FileText;
       case 'video': return Video;
       case 'course': return BookOpen;
@@ -108,9 +112,10 @@ const Resources = () => {
     }
   };
 
-  const getCategoryColor = (id: string) => {
-    const category = categories.find(c => c.id === id)?.name.toLowerCase();
-    switch (category) {
+  const getCategoryColor = (id: string | undefined) => {
+    if (!id) return 'bg-gray-100 text-gray-800';
+    const categoryName = categories.find(c => c.id === id)?.name.toLowerCase();
+    switch (categoryName) {
       case 'education': return 'bg-blue-100 text-blue-800';
       case 'health': return 'bg-green-100 text-green-800';
       case 'legal': return 'bg-red-100 text-red-800';
@@ -119,23 +124,24 @@ const Resources = () => {
   };
 
   const filteredResources = resources.filter(resource => {
-    const parseTags = (t: string | null): string[] =>
-      t ? JSON.parse(t).map((s: string) => s.toLowerCase()) : [];
+    const parseTags = (t: string | null): string[] => {
+      try {
+        return t ? JSON.parse(t).map((s: string) => s.toLowerCase()) : [];
+      } catch {
+        return [];
+      }
+    };
 
     const matchesSearch = resource.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        parseTags(resource.tags).some(tag => tag.includes(searchTerm.toLowerCase()));
-    
+      resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      parseTags(resource.tags).some(tag => tag.includes(searchTerm.toLowerCase()));
+
     const matchesFilter = filterBy === "all" || resource.category_id === filterBy;
-    
+
     return matchesSearch && matchesFilter;
   });
 
-  const documents = filteredResources.filter(r => r.resource_type_id === types.find(t => t.name === 'document')?.id);
-  const videos = filteredResources.filter(r => r.resource_type_id === types.find(t => t.name === 'video')?.id);
-  const courses = filteredResources.filter(r => r.resource_type_id === types.find(t => t.name === 'course')?.id);
-  const templates = filteredResources.filter(r => r.resource_type_id === types.find(t => t.name === 'template')?.id);
-  const totalDownloads = resources.reduce((sum, r) => sum + r.downloads, 0);
+  const totalDownloads = resources.reduce((sum, r) => sum + (r.downloads || 0), 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -175,7 +181,7 @@ const Resources = () => {
               <div className="flex items-center">
                 <BookOpen className="h-8 w-8 text-warm-accent" />
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-foreground">{courses.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{resources.filter(r => r.type === 'course').length}</p>
                   <p className="text-sm text-muted-foreground">Training Courses</p>
                 </div>
               </div>
@@ -186,7 +192,7 @@ const Resources = () => {
               <div className="flex items-center">
                 <Video className="h-8 w-8 text-destructive" />
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-foreground">{videos.length}</p>
+                  <p className="text-2xl font-bold text-foreground">{resources.filter(r => r.type === 'video').length}</p>
                   <p className="text-sm text-muted-foreground">Video Resources</p>
                 </div>
               </div>
@@ -214,15 +220,14 @@ const Resources = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {/* Tabs dinámicos */}
-                  {categories.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name.charAt(0).toUpperCase() + c.name.slice(1).toLowerCase()}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
+              <Button
                 onClick={() => setUploadModalOpen(true)}
                 className="bg-gradient-primary hover:shadow-hover transition-smooth"
               >
@@ -237,7 +242,6 @@ const Resources = () => {
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="all">All ({filteredResources.length})</TabsTrigger>
-            {/* Tabs dinámicos */}
             {types.map((t) => (
               <TabsTrigger key={t.id} value={t.name}>
                 {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()} ({counts[t.id] || 0})
@@ -248,7 +252,7 @@ const Resources = () => {
           <TabsContent value="all">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredResources.map((resource) => {
-                const IconComponent = getTypeIcon(resource.type);
+                const IconComponent = getTypeIcon(resource.type || 'document');
                 return (
                   <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
                     <CardHeader>
@@ -260,7 +264,7 @@ const Resources = () => {
                           <div className="flex items-start justify-between mb-2">
                             <CardTitle className="text-lg">{resource.filename}</CardTitle>
                             <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
-                              {categories.find(c => c.id === resource.category_id)?.name}
+                              {categories.find(c => c.id === resource.category_id)?.name || 'General'}
                             </Badge>
                           </div>
                           <CardDescription className="mb-3">{resource.description}</CardDescription>
@@ -278,22 +282,27 @@ const Resources = () => {
                           <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mb-4">
-                          {(JSON.parse(resource.tags || '[]') as string[]).map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
+                          {(() => {
+                            try {
+                              return (JSON.parse(resource.tags || '[]') as string[]).map((tag) => (
+                                <Badge key={tag} variant="outline" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ));
+                            } catch {
+                              return null;
+                            }
+                          })()}
                         </div>
                         <div className="flex space-x-2">
                           <Button variant="outline" size="sm" className="flex-1"
-                          onClick={() => handlePreviewResource(resource)}>
+                            onClick={() => handlePreviewResource(resource)}>
                             <Eye className="h-4 w-4 mr-2" />
                             Preview
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             className="flex-1"
-                            // onClick={() => handleDownloadResource(resource)}
                             onClick={() => download(resource)}
                             disabled={isPending}
                           >
@@ -302,7 +311,7 @@ const Resources = () => {
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" className="px-2">
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -312,7 +321,7 @@ const Resources = () => {
                                 Share Link
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => handleDeleteResource(resource)}
                                 className="text-destructive focus:text-destructive"
                               >
@@ -330,193 +339,74 @@ const Resources = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="document">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {documents.map((resource) => (
-                <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
-                  <CardHeader>
-                    <div className="flex items-start space-x-4">
-                      <div className="p-2 bg-gradient-soft rounded-lg">
-                        <FileText className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
-                          <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
-                            {resource.category}
-                          </Badge>
+          {types.map((type) => (
+            <TabsContent key={type.id} value={type.name}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredResources.filter(r => r.resource_type_id === type.id).map((resource) => {
+                  const IconComponent = getTypeIcon(resource.type || 'document');
+                  return (
+                    <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
+                      <CardHeader>
+                        <div className="flex items-start space-x-4">
+                          <div className="p-2 bg-gradient-soft rounded-lg">
+                            <IconComponent className="h-6 w-6 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <CardTitle className="text-lg">{resource.filename}</CardTitle>
+                              <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
+                                {categories.find(c => c.id === resource.category_id)?.name || 'General'}
+                              </Badge>
+                            </div>
+                            <CardDescription className="mb-3">{resource.description}</CardDescription>
+                          </div>
                         </div>
-                        <CardDescription className="mb-3">{resource.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Format: {resource.format}</span>
-                        <span>Size: {resource.size}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Downloads: {resource.downloads}</span>
-                        <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          View
-                        </Button>
-                        <Button 
-                            size="sm" 
-                            className="flex-1"
-                            // onClick={() => handleDownloadResource(resource)}
-                            onClick={() => download(resource)}
-                            disabled={isPending}
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            {isPending ? 'Downloading...' : 'Download'}
-                          </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="video">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {videos.map((resource) => (
-                <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
-                  <CardHeader>
-                    <div className="flex items-start space-x-4">
-                      <div className="p-2 bg-gradient-soft rounded-lg">
-                        <Video className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
-                          <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
-                            {resource.category}
-                          </Badge>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            <span>Format: {resource.format}</span>
+                            <span>Size: {formatFileSize(resource.size)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            <span>Downloads: {resource.downloads}</span>
+                            <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" className="flex-1"
+                              onClick={() => handlePreviewResource(resource)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Preview
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => download(resource)}
+                              disabled={isPending}
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              {isPending ? 'Downloading...' : 'Download'}
+                            </Button>
+                          </div>
                         </div>
-                        <CardDescription className="mb-3">{resource.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Format: {resource.format}</span>
-                        <span>Size: {resource.size}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Views: {resource.downloads}</span>
-                        <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
-                      </div>
-                      <Button size="sm" className="w-full">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Watch Video
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="course">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {courses.map((resource) => (
-                <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
-                  <CardHeader>
-                    <div className="flex items-start space-x-4">
-                      <div className="p-2 bg-gradient-soft rounded-lg">
-                        <BookOpen className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
-                          <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
-                            {resource.category}
-                          </Badge>
-                        </div>
-                        <CardDescription className="mb-3">{resource.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Format: {resource.format}</span>
-                        <span>Enrolled: {resource.downloads}</span>
-                      </div>
-                      <Button size="sm" className="w-full">
-                        <BookOpen className="h-4 w-4 mr-2" />
-                        Start Course
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="template">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {templates.map((resource) => (
-                <Card key={resource.id} className="shadow-card hover:shadow-hover transition-smooth">
-                  <CardHeader>
-                    <div className="flex items-start space-x-4">
-                      <div className="p-2 bg-gradient-soft rounded-lg">
-                        <File className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <CardTitle className="text-lg">{resource.filename}</CardTitle>
-                          <Badge variant="outline" className={getCategoryColor(resource.category_id)}>
-                            {resource.category}
-                          </Badge>
-                        </div>
-                        <CardDescription className="mb-3">{resource.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Format: {resource.format}</span>
-                        <span>Size: {resource.size}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Downloads: {resource.downloads}</span>
-                        <span>Added: {new Date(resource.created_at).toLocaleDateString('es-ES')}</span>
-                      </div>
-                      <Button 
-                            size="sm" 
-                            className="w-full"
-                            // onClick={() => handleDownloadResource(resource)}
-                            onClick={() => download(resource)}
-                            disabled={isPending}
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            {isPending ? 'Downloading...' : 'Download'}
-                          </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </TabsContent>
+          ))}
         </Tabs>
       </main>
-      
-      <UploadResourceModal 
+
+      <UploadResourceModal
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         onUpload={handleUploadResource}
-        categories={categories}   // ← pasas los datos
+        categories={categories}
         types={types}
       />
+
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={confirmDialog.hideDialog}

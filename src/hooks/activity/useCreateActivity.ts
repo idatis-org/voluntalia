@@ -4,8 +4,8 @@ import { ActivityTask } from "@/types/activity";
 
 export const useCreateActivity = () => {
   const queryClient = useQueryClient();
-  
-  return useMutation<ActivityTask, Error, Omit<ActivityTask, "id">>({
+
+  return useMutation<ActivityTask, Error, Omit<ActivityTask, "id" | "createdAt" | "updatedAt">>({
     mutationFn: createActivity,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["activities"] });

@@ -46,15 +46,16 @@ export const useVolunteersPage = () => {
     setCurrentPage,
     resetSearch,
   } = useSearchAndFilter({
-    data: users,
-    searchFields: ['name', 'email'],
+    data: users as unknown as Record<string, unknown>[],
+    searchFields: ['name', 'email'] as unknown as (keyof Record<string, unknown>)[],
     defaultFilter: 'all',
     itemsPerPage: 6,
   });
 
   // Further filter volunteers based on advanced filters
   const finalFilteredVolunteers = useMemo(() => {
-    return filteredVolunteers.filter((volunteer) => {
+    return filteredVolunteers.filter((v) => {
+      const volunteer = v as unknown as User;
       const matchesStatus =
         filters.main === 'all' ||
         (filters.main === 'active' && volunteer.isActive === true) ||
@@ -74,7 +75,7 @@ export const useVolunteersPage = () => {
           (volunteer.totalWorkHours || 0) <= 100) ||
         (hoursRange === '101-200' &&
           (volunteer.totalWorkHours || 0) > 100 &&
-          (volunteer.totalWorkHours || 0) <= 200) ||
+          (volunteer.totalWorkHours || 0) <= 100) ||
         (hoursRange === '200+' && (volunteer.totalWorkHours || 0) > 200);
 
       // return matchesStatus && matchesSkill && matchesHours && matchesEvents && matchesJoinDate;
@@ -85,8 +86,6 @@ export const useVolunteersPage = () => {
     filters.main,
     skillFilter,
     hoursRange,
-    eventsRange,
-    joinDateFilter,
   ]);
 
   // Recalculate pagination for final filtered data

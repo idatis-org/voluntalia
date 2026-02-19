@@ -20,6 +20,7 @@ export interface Resource {
   category_id?: string;
 }
 
+export type VoluntaliaResource = Resource;
 
 export type ResourceCategory = BaseResource;
 export type ResourceType = BaseResource;
@@ -39,7 +40,7 @@ export interface CreateResourceDTO {
 }
 
 export interface CreateResourceWithFileDTO {
-  file: File;               
+  file: File;
   title: string;
   description: string;
   resource_type_id: string;
@@ -50,5 +51,5 @@ export interface CreateResourceWithFileDTO {
   tags: string[];
   visibility?: string;
   permissions?: string;
-  folder?: string;          
+  folder?: string;
 }

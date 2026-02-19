@@ -26,11 +26,11 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedFormat, setSelectedFormat] = useState<string>(null);
+  const [selectedFormat, setSelectedFormat] = useState<string>("");
   const [tags, setTags] = useState<string[]>([]);
   const uploadResourceMutation = useUploadResource();
   const [newTag, setNewTag] = useState("");
-  
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -44,15 +44,19 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      // Auto-detect type based on file extension
-      const extension = file.name.split('.').pop()?.toLowerCase();
-      let type = types.find(t => t.name === 'document')?.id;//"document";
-      if (["mp4", "avi", "mov", "wmv"].includes(extension || "")) type = types.find(t => t.name === 'video')?.id;
-      if (["xlsx", "xls", "docx", "pptx"].includes(extension || "")) type = types.find(t => t.name === 'template')?.id;
-      setSelectedFormat(extension || "");
+      const extension = file.name.split('.').pop()?.toLowerCase() || "";
+      setSelectedFormat(extension);
+
+      let detectedType = types.find(t => t.name.toLowerCase() === 'document')?.id;
+      if (["mp4", "avi", "mov", "wmv"].includes(extension)) {
+        detectedType = types.find(t => t.name.toLowerCase() === 'video')?.id;
+      } else if (["xlsx", "xls", "docx", "pptx"].includes(extension)) {
+        detectedType = types.find(t => t.name.toLowerCase() === 'template')?.id;
+      }
+
       setFormData(prev => ({
         ...prev,
-        type,
+        type: detectedType || prev.type,
         title: prev.title || file.name.split('.')[0]
       }));
     }
@@ -85,22 +89,32 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
       return;
     }
 
+    if (!formData.category || !formData.type) {
+      toast({
+        title: "Fields Required",
+        description: "Please select a category and type.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     setUploadProgress(0);
 
     uploadResourceMutation.mutate({
-        file: selectedFile,
-        title: formData.title,
-        description: formData.description,
-        resource_type_id: formData.type,
-        category_id: formData.category,
-        format: selectedFormat,
-        size: String(selectedFile.size),
-        type: types.find(t => t.id === formData.type)?.name || "document",
-        tags: tags,
-        folder: formData.type,
-      }, {
-      onSuccess: (newResource) => {
+      file: selectedFile,
+      title: formData.title,
+      description: formData.description,
+      resource_type_id: formData.type,
+      category_id: formData.category,
+      format: selectedFormat.toUpperCase(),
+      size: String(selectedFile.size),
+      type: types.find(t => t.id === formData.type)?.name || "document",
+      tags: tags,
+      visibility: formData.visibility,
+      permissions: formData.permissions
+    }, {
+      onSuccess: () => {
         toast({
           title: "Resource Uploaded Successfully",
           description: `Resource has been uploaded and is now available.`,
@@ -109,7 +123,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
         resetForm();
       },
       onError: (err) => {
-        console.log(err);
+        console.error('[UploadResourceModal] Error:', err);
         toast({
           title: "Upload Failed",
           description: "Failed to upload resource. Please try again.",
@@ -146,6 +160,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
     setTags([]);
     setNewTag("");
     setSelectedFile(null);
+    setSelectedFormat("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -164,11 +179,10 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* File Upload */}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>File Upload *</Label>
-              <div 
+              <div
                 className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-smooth"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -208,16 +222,15 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
             )}
           </div>
 
-          {/* Resource Details */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Resource Details</h3>
-            
+            <h3 className="text-lg font-semibold border-b pb-1">Resource Details</h3>
+
             <div className="space-y-2">
               <Label htmlFor="title">Title *</Label>
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Enter resource title..."
                 required
               />
@@ -228,39 +241,39 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                placeholder="Describe what this resource contains and how it helps volunteers..."
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Describe what this resource contains..."
                 rows={3}
                 required
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                  <SelectTrigger>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name.charAt(0).toUpperCase() + c.name.slice(1).toLowerCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="type">Resource Type</Label>
-                <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
-                  <SelectTrigger>
+                <Label htmlFor="type">Resource Type *</Label>
+                <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+                  <SelectTrigger id="type">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
                     {types.map((t) => (
-                      <SelectItem key={t.name} value={t.id}>
+                      <SelectItem key={t.id} value={t.id}>
                         {t.name.charAt(0).toUpperCase() + t.name.slice(1).toLowerCase()}
                       </SelectItem>
                     ))}
@@ -270,10 +283,9 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
             </div>
           </div>
 
-          {/* Tags */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Tags & Permissions</h3>
-            
+            <h3 className="text-lg font-semibold border-b pb-1">Tags & Permissions</h3>
+
             <div className="space-y-2">
               <Label>Tags</Label>
               <div className="flex space-x-2">
@@ -281,21 +293,26 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   placeholder="Add tags..."
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
                 />
-                <Button type="button" onClick={addTag} variant="outline">
+                <Button type="button" onClick={addTag} variant="outline" size="icon">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
               {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   {tags.map((tag) => (
                     <Badge key={tag} variant="secondary" className="flex items-center space-x-1">
                       <span>{tag}</span>
                       <button
                         type="button"
                         onClick={() => removeTag(tag)}
-                        className="ml-1 text-muted-foreground hover:text-foreground"
+                        className="ml-1 text-muted-foreground hover:text-foreground focus:outline-none"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -305,11 +322,11 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="visibility">Visibility</Label>
-                <Select value={formData.visibility} onValueChange={(value) => setFormData({...formData, visibility: value})}>
-                  <SelectTrigger>
+                <Select value={formData.visibility} onValueChange={(value) => setFormData({ ...formData, visibility: value })}>
+                  <SelectTrigger id="visibility">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -319,11 +336,11 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="permissions">Download Permissions</Label>
-                <Select value={formData.permissions} onValueChange={(value) => setFormData({...formData, permissions: value})}>
-                  <SelectTrigger>
+                <Select value={formData.permissions} onValueChange={(value) => setFormData({ ...formData, permissions: value })}>
+                  <SelectTrigger id="permissions">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -336,7 +353,7 @@ const UploadResourceModal = ({ open, onOpenChange, onUpload, categories, types }
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

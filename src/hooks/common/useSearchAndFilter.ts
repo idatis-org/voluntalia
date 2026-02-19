@@ -7,13 +7,13 @@ interface UseSearchAndFilterOptions<T> {
   itemsPerPage?: number;
 }
 
-interface FilterConfig {
+interface FilterConfig<T> {
   key: string;
   value: string;
-  matcher: (item: any, value: string) => boolean;
+  matcher: (item: T, value: string) => boolean;
 }
 
-export const useSearchAndFilter = <T>({
+export const useSearchAndFilter = <T extends object>({
   data,
   searchFields,
   defaultFilter = 'all',
@@ -36,20 +36,130 @@ export const useSearchAndFilter = <T>({
   };
 
   const filteredData = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase().trim();
+
+    // Simple normalization
+    const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+
+    // Levenshtein distance
+    const levenshtein = (a: string, b: string) => {
+      const m = a.length, n = b.length;
+      const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+        }
+      }
+      return dp[m][n];
+    };
+
+    // Fuzzy match: exact includes OR subsequence OR small edit distance relative to length
+    const fuzzyMatch = (text: string, pattern: string): boolean => {
+      if (!pattern) return true;
+      const t = normalize(text || '');
+      const p = normalize(pattern || '');
+      if (t.includes(p)) return true;
+
+      // subsequence check (chars in order)
+      let pi = 0;
+      for (let i = 0; i < t.length && pi < p.length; i++) {
+        if (t[i] === p[pi]) pi++;
+      }
+      if (pi === p.length) return true;
+
+      // allow small edit distance for short patterns
+      const dist = levenshtein(t, p);
+      const threshold = Math.max(1, Math.floor(p.length * 0.34));
+      return dist <= threshold;
+    };
+
+    // Map status values to their display names
+    const statusMap: Record<string, string> = {
+      'completed': 'completada',
+      'active': 'en curso',
+      'cancelled': 'cancelada',
+      'planned': 'planificada'
+    };
+
+    // Month names for date search
+    const monthNames = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+
+    const getDateSearchValue = (dateStr: string): string => {
+      try {
+        const date = new Date(dateStr);
+        const month = monthNames[date.getMonth()];
+        const year = date.getFullYear();
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${day} ${month} ${year}`;
+      } catch {
+        return dateStr;
+      }
+    };
+
     return data.filter(item => {
-      // Search logic
-      const matchesSearch = !searchTerm || searchFields.some(field => {
-        const value = item[field];
+      const it = item as Record<string, unknown>;
+      // Apply filters first
+      if (filters.project && filters.project !== 'all') {
+        const project = it.project as Record<string, unknown> | undefined;
+        const projId = project?.id || it.projectId || '';
+        if (projId !== filters.project) return false;
+      }
+
+      if (filters.status && filters.status !== 'all') {
+        const st = (it.status as string) || 'planned';
+        if (st !== filters.status) return false;
+      }
+
+      if (filters.dateFrom || filters.dateTo) {
+        const itemDate = new Date((it.date as string) || (it.createdAt as string) || '');
+        if (filters.dateFrom) {
+          const from = new Date(filters.dateFrom);
+          if (itemDate < from) return false;
+        }
+        if (filters.dateTo) {
+          const to = new Date(filters.dateTo);
+          to.setHours(23, 59, 59, 999);
+          if (itemDate > to) return false;
+        }
+      }
+
+      if (!searchTerm) return true;
+
+      // Search logic with fuzzy matching
+      const matchesSearch = searchFields.some(field => {
+        const value = it[field as string];
+
         if (typeof value === 'string') {
-          return value.toLowerCase().includes(searchTerm.toLowerCase());
+          // For date fields, search in formatted date with month names
+          if (field === 'date' || (field as string) === 'createdAt' || (field as string) === 'updatedAt') {
+            const ds = getDateSearchValue(value).toLowerCase();
+            return fuzzyMatch(ds, searchLower) || fuzzyMatch(value.toLowerCase(), searchLower);
+          }
+          return fuzzyMatch(value, searchLower);
+        }
+        if (typeof value === 'number') {
+          return String(value).includes(searchLower);
         }
         if (Array.isArray(value)) {
-          return value.some(v => 
-            typeof v === 'string' && v.toLowerCase().includes(searchTerm.toLowerCase())
-          );
+          return value.some(v => typeof v === 'string' && fuzzyMatch(v, searchLower));
         }
         return false;
-      });
+      }) ||
+        // Also search in nested fields like project.name, created_by.name
+        (
+          fuzzyMatch(((it.project as Record<string, string>)?.name || ''), searchLower) ||
+          fuzzyMatch(((it.createdBy as Record<string, string>)?.name || ''), searchLower) ||
+          fuzzyMatch(((it.created_by as Record<string, string>)?.name || ''), searchLower) ||
+          String(it.completed_hours || it.completedHours || '').includes(searchLower) ||
+          // Search by status display names (Completada, En curso, etc)
+          (statusMap[it.status as string] || '').includes(searchLower)
+        );
 
       return matchesSearch;
     });
@@ -73,13 +183,13 @@ export const useSearchAndFilter = <T>({
     searchTerm,
     filters,
     currentPage,
-    
+
     // Data
     filteredData,
     paginatedData,
     totalItems,
     totalPages,
-    
+
     // Actions
     setSearchTerm,
     setMainFilter,

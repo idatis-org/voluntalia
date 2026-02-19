@@ -7,11 +7,17 @@ export interface User {
   phone: string;
   country: string;
   city: string;
-  role?: string;
   isActive: boolean;
+  role?: string; // 'COORDINATOR' | 'PROJECT_MANAGER' | 'VOLUNTEER' | 'LEGAL'
+  project_id?: string | null; // Presente si user es PROJECT_MANAGER
   volunteerActivities?: ActivityTask[] | null;
   totalWorkHours?: number | null;
   createdAt: string;
+}
+
+export interface UserProject {
+  id: string;
+  name: string;
 }
 
 export interface CreateUserDTO {

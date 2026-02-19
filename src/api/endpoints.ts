@@ -10,4 +10,5 @@ export const ENDPOINTS = {
   ACTIVITIES: '/activity',
   RESOURCE: '/document',
   STATS: 'dashboard/stats',
+  PROJECTS: '/projects',
 };

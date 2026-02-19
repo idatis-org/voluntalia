@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 export interface StatConfig<T> {
   key: string;
   label: string;
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<{ className?: string }>;
   calculate: (data: T[]) => number | string;
   color?: string;
 }

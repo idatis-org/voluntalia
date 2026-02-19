@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 
-export interface UseModalOptions<T = any> {
+export interface UseModalOptions<T = unknown> {
   onClose?: () => void;
   onOpen?: (data?: T) => void;
 }
 
-export const useModal = <T = any>(options: UseModalOptions<T> = {}) => {
+export const useModal = <T = unknown>(options: UseModalOptions<T> = {}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [data, setData] = useState<T | null>(null);
