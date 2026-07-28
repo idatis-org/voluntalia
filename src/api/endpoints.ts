@@ -9,5 +9,7 @@ export const ENDPOINTS = {
   SKILLS: '/skill',
   ACTIVITIES: '/activity',
   RESOURCE: '/document',
+  NOTIFICATIONS: '/notification',
+  USER_PREFERENCES: '/users/me/preferences',
   STATS: 'dashboard/stats',
 };

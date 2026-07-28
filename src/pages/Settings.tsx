@@ -1,6 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useCurrentUser } from "@/hooks/user/useCurrentUser";
+import { usePreferences } from "@/hooks/preferences/usePreferences";
+import { useUpdatePreferences } from "@/hooks/preferences/useUpdatePreferences";
+import { useToast } from "@/hooks/use-toast";
+import { formatPhoneNumber } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,37 +14,76 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { 
-  User, 
-  Bell, 
-  Shield, 
-  Palette, 
-  Globe, 
-  Database, 
-  Save,
-  Eye,
-  EyeOff,
-  Check
-} from "lucide-react";
+import { User, Bell, Palette, Save, KeyRound } from "lucide-react";
 
 const Settings = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const { theme, setTheme } = useTheme();
-  const [showPassword, setShowPassword] = useState(false);
+  const { data: userData } = useCurrentUser();
+  const user = userData?.user;
+
+  const { data: preferences, isLoading: isPreferencesLoading } = usePreferences();
+  const updatePreferences = useUpdatePreferences();
+
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
-    sms: true,
+    sms: false,
     events: true,
-    updates: false
+    updates: false,
   });
 
-  const [preferences, setPreferences] = useState({
+  const [appearance, setAppearance] = useState({
     language: "en",
     timezone: "America/New_York",
-    dateFormat: "MM/DD/YYYY"
+    dateFormat: "MM/DD/YYYY",
   });
+
+  // Sincroniza el formulario local cuando llegan las preferencias reales del backend
+  useEffect(() => {
+    if (!preferences) return;
+    setNotifications({
+      email: preferences.emailNotifications,
+      push: preferences.pushNotifications,
+      sms: preferences.smsNotifications,
+      events: preferences.eventNotifications,
+      updates: preferences.updateNotifications,
+    });
+    setAppearance({
+      language: preferences.language,
+      timezone: preferences.timezone,
+      dateFormat: preferences.dateFormat,
+    });
+  }, [preferences]);
+
+  const saveNotifications = async () => {
+    try {
+      await updatePreferences.mutateAsync({
+        emailNotifications: notifications.email,
+        pushNotifications: notifications.push,
+        smsNotifications: notifications.sms,
+        eventNotifications: notifications.events,
+        updateNotifications: notifications.updates,
+      });
+      toast({ title: "Preferences saved", description: "Your notification preferences were updated." });
+    } catch {
+      toast({ title: "Error", description: "Failed to save preferences.", variant: "destructive" });
+    }
+  };
+
+  const saveAppearance = async () => {
+    try {
+      await updatePreferences.mutateAsync({
+        language: appearance.language,
+        timezone: appearance.timezone,
+        dateFormat: appearance.dateFormat,
+      });
+      toast({ title: "Preferences saved", description: "Your appearance preferences were updated." });
+    } catch {
+      toast({ title: "Error", description: "Failed to save preferences.", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,11 +91,11 @@ const Settings = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground mt-2">Manage your account preferences and system settings</p>
+          <p className="text-muted-foreground mt-2">Manage your account preferences</p>
         </div>
 
         <Tabs defaultValue="account" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="account" className="flex items-center space-x-2">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Account</span>
@@ -59,17 +104,9 @@ const Settings = () => {
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
-            <TabsTrigger value="privacy" className="flex items-center space-x-2">
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">Privacy</span>
-            </TabsTrigger>
             <TabsTrigger value="appearance" className="flex items-center space-x-2">
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Appearance</span>
-            </TabsTrigger>
-            <TabsTrigger value="system" className="flex items-center space-x-2">
-              <Database className="h-4 w-4" />
-              <span className="hidden sm:inline">System</span>
             </TabsTrigger>
           </TabsList>
 
@@ -78,71 +115,42 @@ const Settings = () => {
               <Card className="shadow-card">
                 <CardHeader>
                   <CardTitle>Profile Information</CardTitle>
-                  <CardDescription>Update your personal information and contact details</CardDescription>
+                  <CardDescription>Your personal information on file</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input id="firstName" defaultValue="Sarah" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input id="lastName" defaultValue="Johnson" />
+                      <Label htmlFor="name">Name</Label>
+                      <Input id="name" value={user?.name || ""} readOnly />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
-                      <Input id="email" type="email" defaultValue="sarah.johnson@email.com" />
+                      <Input id="email" type="email" value={user?.email || ""} readOnly />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
-                      <Input id="phone" defaultValue="+1 (555) 123-4567" />
+                      <Input id="phone" value={formatPhoneNumber(user?.phone || "")} readOnly />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="location">Location</Label>
+                      <Input id="location" value={`${user?.city || ""}, ${user?.country || ""}`} readOnly />
                     </div>
                   </div>
-                  <Button className="bg-gradient-primary hover:shadow-hover transition-smooth">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    To update this information, visit your Profile page.
+                  </p>
                 </CardContent>
               </Card>
 
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle>Change Password</CardTitle>
-                  <CardDescription>Update your password to keep your account secure</CardDescription>
+                  <CardTitle>Password</CardTitle>
+                  <CardDescription>Change your password via a secure reset link sent to your email</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="currentPassword"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter current password"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword">New Password</Label>
-                      <Input id="newPassword" type="password" placeholder="Enter new password" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <Input id="confirmPassword" type="password" placeholder="Confirm new password" />
-                    </div>
-                  </div>
-                  <Button variant="outline">
-                    Update Password
+                <CardContent>
+                  <Button variant="outline" onClick={() => navigate("/reset-password")}>
+                    <KeyRound className="h-4 w-4 mr-2" />
+                    Reset Password
                   </Button>
                 </CardContent>
               </Card>
@@ -167,7 +175,7 @@ const Settings = () => {
                       <Switch
                         id="email-notifications"
                         checked={notifications.email}
-                        onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, email: checked }))}
+                        onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, email: checked }))}
                       />
                     </div>
                     <div className="flex items-center justify-between">
@@ -178,7 +186,7 @@ const Settings = () => {
                       <Switch
                         id="push-notifications"
                         checked={notifications.push}
-                        onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, push: checked }))}
+                        onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, push: checked }))}
                       />
                     </div>
                     <div className="flex items-center justify-between">
@@ -189,13 +197,11 @@ const Settings = () => {
                       <Switch
                         id="sms-notifications"
                         checked={notifications.sms}
-                        onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, sms: checked }))}
+                        onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, sms: checked }))}
                       />
                     </div>
                   </div>
                 </div>
-
-                <Separator />
 
                 <div className="space-y-4">
                   <h4 className="text-sm font-medium">Content Preferences</h4>
@@ -208,7 +214,7 @@ const Settings = () => {
                       <Switch
                         id="event-notifications"
                         checked={notifications.events}
-                        onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, events: checked }))}
+                        onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, events: checked }))}
                       />
                     </div>
                     <div className="flex items-center justify-between">
@@ -219,77 +225,22 @@ const Settings = () => {
                       <Switch
                         id="update-notifications"
                         checked={notifications.updates}
-                        onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, updates: checked }))}
+                        onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, updates: checked }))}
                       />
                     </div>
                   </div>
                 </div>
 
-                <Button className="bg-gradient-primary hover:shadow-hover transition-smooth">
+                <Button
+                  className="bg-gradient-primary hover:shadow-hover transition-smooth"
+                  onClick={saveNotifications}
+                  disabled={isPreferencesLoading || updatePreferences.isPending}
+                >
                   <Save className="h-4 w-4 mr-2" />
                   Save Preferences
                 </Button>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="privacy">
-            <div className="space-y-6">
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle>Privacy Settings</CardTitle>
-                  <CardDescription>Control your privacy and data sharing preferences</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Profile Visibility</Label>
-                        <p className="text-sm text-muted-foreground">Make your profile visible to other volunteers</p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Activity Tracking</Label>
-                        <p className="text-sm text-muted-foreground">Allow tracking of volunteer hours and activities</p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Contact Information Sharing</Label>
-                        <p className="text-sm text-muted-foreground">Share contact info with event organizers</p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle>Data Management</CardTitle>
-                  <CardDescription>Manage your personal data and account</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-soft rounded-lg">
-                    <div>
-                      <p className="font-medium">Download Your Data</p>
-                      <p className="text-sm text-muted-foreground">Get a copy of your volunteer data</p>
-                    </div>
-                    <Button variant="outline">Download</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gradient-soft rounded-lg">
-                    <div>
-                      <p className="font-medium">Delete Account</p>
-                      <p className="text-sm text-muted-foreground">Permanently delete your account and data</p>
-                    </div>
-                    <Button variant="destructive">Delete</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </TabsContent>
 
           <TabsContent value="appearance">
@@ -302,7 +253,7 @@ const Settings = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="theme">Theme</Label>
-                    <Select value={theme} onValueChange={(value) => setTheme(value as 'light' | 'dark' | 'system')}>
+                    <Select value={theme} onValueChange={(value) => setTheme(value as "light" | "dark" | "system")}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -313,10 +264,13 @@ const Settings = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="language">Language</Label>
-                    <Select value={preferences.language} onValueChange={(value) => setPreferences(prev => ({ ...prev, language: value }))}>
+                    <Select
+                      value={appearance.language}
+                      onValueChange={(value) => setAppearance((prev) => ({ ...prev, language: value }))}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -331,7 +285,10 @@ const Settings = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Timezone</Label>
-                    <Select value={preferences.timezone} onValueChange={(value) => setPreferences(prev => ({ ...prev, timezone: value }))}>
+                    <Select
+                      value={appearance.timezone}
+                      onValueChange={(value) => setAppearance((prev) => ({ ...prev, timezone: value }))}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -346,7 +303,10 @@ const Settings = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="dateFormat">Date Format</Label>
-                    <Select value={preferences.dateFormat} onValueChange={(value) => setPreferences(prev => ({ ...prev, dateFormat: value }))}>
+                    <Select
+                      value={appearance.dateFormat}
+                      onValueChange={(value) => setAppearance((prev) => ({ ...prev, dateFormat: value }))}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -359,84 +319,16 @@ const Settings = () => {
                   </div>
                 </div>
 
-                <Button className="bg-gradient-primary hover:shadow-hover transition-smooth">
+                <Button
+                  className="bg-gradient-primary hover:shadow-hover transition-smooth"
+                  onClick={saveAppearance}
+                  disabled={isPreferencesLoading || updatePreferences.isPending}
+                >
                   <Save className="h-4 w-4 mr-2" />
                   Save Preferences
                 </Button>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="system">
-            <div className="space-y-6">
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle>System Information</CardTitle>
-                  <CardDescription>View system status and configuration details</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-gradient-soft rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">System Status</span>
-                        <Badge variant="default" className="bg-green-100 text-green-800">
-                          <Check className="h-3 w-3 mr-1" />
-                          Operational
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-gradient-soft rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Last Backup</span>
-                        <span className="text-sm text-muted-foreground">2 hours ago</span>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-gradient-soft rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Version</span>
-                        <span className="text-sm text-muted-foreground">v2.1.0</span>
-                      </div>
-                    </div>
-                    <div className="p-4 bg-gradient-soft rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Storage Used</span>
-                        <span className="text-sm text-muted-foreground">2.3 GB / 10 GB</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle>System Maintenance</CardTitle>
-                  <CardDescription>Perform system maintenance and administrative tasks</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-soft rounded-lg">
-                    <div>
-                      <p className="font-medium">Export System Logs</p>
-                      <p className="text-sm text-muted-foreground">Download system logs for troubleshooting</p>
-                    </div>
-                    <Button variant="outline">Export</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gradient-soft rounded-lg">
-                    <div>
-                      <p className="font-medium">Clear Cache</p>
-                      <p className="text-sm text-muted-foreground">Clear system cache to improve performance</p>
-                    </div>
-                    <Button variant="outline">Clear</Button>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gradient-soft rounded-lg">
-                    <div>
-                      <p className="font-medium">Run Diagnostics</p>
-                      <p className="text-sm text-muted-foreground">Check system health and performance</p>
-                    </div>
-                    <Button variant="outline">Run</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </TabsContent>
         </Tabs>
       </main>

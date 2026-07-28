@@ -22,46 +22,32 @@ import {
   Edit,
 } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/user/useCurrentUser';
+import { useWorkLog } from '@/hooks/workLog/useWorkLog';
 import { formatPhoneNumber } from '@/lib/utils';
+import { User } from '@/types/user';
+
+// GET /auth/me incluye las skills del usuario, aunque el tipo User compartido
+// no las declara (otras pantallas usan `skills` con una forma distinta).
+type CurrentUser = User & { skills?: { id: string; name: string }[] | null };
 
 const Profile = () => {
   const { data, isLoading, error } = useCurrentUser();
+  const { data: worklog = [], isLoading: isWorklogLoading } = useWorkLog();
   if (isLoading) return <p>Cargando perfil...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
   // Destructure user from data to avoid user.user syntax
-  const user = data?.user;
-  // REMOVE THIS DATA WHEN INTEGRATING WITH REAL USER DATA IS 100% DONE
-  const mockUser = {
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@email.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    joinDate: 'March 2023',
-    totalHours: 127,
-    eventsAttended: 15,
-    skills: ['Community Outreach', 'Event Planning', 'Teaching', 'Translation'],
-    recentActivities: [
-      {
-        id: 1,
-        event: 'Food Drive Coordination',
-        date: 'Dec 15, 2024',
-        hours: 6,
-      },
-      {
-        id: 2,
-        event: 'Community Garden Workshop',
-        date: 'Dec 10, 2024',
-        hours: 4,
-      },
-      {
-        id: 3,
-        event: 'Youth Mentoring Session',
-        date: 'Dec 5, 2024',
-        hours: 3,
-      },
-    ],
-  };
+  const user = data?.user as CurrentUser | undefined;
+
+  const totalHours = worklog.reduce((sum, entry) => sum + (entry.hours.hours || 0), 0);
+  const eventsAttended = user?.volunteerActivities?.length ?? 0;
+  const skills = user?.skills?.map((skill) => skill.name) ?? [];
+  const recentActivities = worklog.slice(0, 3).map((entry) => ({
+    id: entry.id,
+    event: entry.activity?.title || entry.notes,
+    date: entry.weekStart,
+    hours: entry.hours.hours || 0,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,7 +81,7 @@ const Profile = () => {
                 <div className="text-center grid grid-cols-2 gap-4">
                   <div className="p-3 bg-gradient-soft rounded-lg">
                     <div className="text-2xl font-bold text-primary">
-                      {mockUser.totalHours}
+                      {totalHours}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       Total Hours
@@ -103,7 +89,7 @@ const Profile = () => {
                   </div>
                   <div className="p-3 bg-gradient-soft rounded-lg">
                     <div className="text-2xl font-bold text-primary">
-                      {mockUser.eventsAttended}
+                      {eventsAttended}
                     </div>
                     <div className="text-sm text-muted-foreground">Events</div>
                   </div>
@@ -188,29 +174,35 @@ const Profile = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {mockUser.recentActivities.map((activity) => (
-                        <div
-                          key={activity.id}
-                          className="flex items-center justify-between p-4 bg-gradient-soft rounded-lg"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <Award className="h-5 w-5 text-primary" />
-                            <div>
-                              <p className="font-medium">{activity.event}</p>
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                <span className="flex items-center space-x-1">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>{activity.date}</span>
-                                </span>
-                                <span className="flex items-center space-x-1">
-                                  <Clock className="h-3 w-3" />
-                                  <span>{activity.hours}h</span>
-                                </span>
+                      {isWorklogLoading ? (
+                        <p className="text-sm text-muted-foreground">Cargando actividad...</p>
+                      ) : recentActivities.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Todavía no hay horas registradas.</p>
+                      ) : (
+                        recentActivities.map((activity) => (
+                          <div
+                            key={activity.id}
+                            className="flex items-center justify-between p-4 bg-gradient-soft rounded-lg"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <Award className="h-5 w-5 text-primary" />
+                              <div>
+                                <p className="font-medium">{activity.event}</p>
+                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                  <span className="flex items-center space-x-1">
+                                    <Calendar className="h-3 w-3" />
+                                    <span>{activity.date}</span>
+                                  </span>
+                                  <span className="flex items-center space-x-1">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{activity.hours}h</span>
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -234,15 +226,19 @@ const Profile = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {mockUser.skills.map((skill) => (
-                        <Badge
-                          key={skill}
-                          variant="secondary"
-                          className="px-3 py-1"
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
+                      {skills.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No hay skills asignadas todavía.</p>
+                      ) : (
+                        skills.map((skill) => (
+                          <Badge
+                            key={skill}
+                            variant="secondary"
+                            className="px-3 py-1"
+                          >
+                            {skill}
+                          </Badge>
+                        ))
+                      )}
                     </div>
                   </CardContent>
                 </Card>

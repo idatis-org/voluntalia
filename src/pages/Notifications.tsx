@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,162 +7,105 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Plus, Users, Globe, AlertCircle, Info, CheckCircle, Clock, Send, Calendar } from "lucide-react";
-
-// Mock data for notifications
-const mockNotifications = [
-  {
-    id: 1,
-    title: "System Update Scheduled",
-    message: "The system will be updated tonight from 2:00 AM to 4:00 AM. Some features may be temporarily unavailable.",
-    type: "info",
-    recipient: "everyone",
-    sender: "System Admin",
-    createdAt: "2024-01-15T10:30:00Z",
-    read: false
-  },
-  {
-    id: 2,
-    title: "New Event: Community Cleanup",
-    message: "Join us for a community cleanup event this Saturday at Central Park. Volunteers needed!",
-    type: "event",
-    recipient: "everyone",
-    sender: "Maria Garcia",
-    createdAt: "2024-01-14T15:45:00Z",
-    read: true
-  },
-  {
-    id: 3,
-    title: "Hours Approval Required",
-    message: "Your submitted hours for last week are pending approval. Please check with your coordinator.",
-    type: "warning",
-    recipient: "specific",
-    recipientUsers: ["John Doe"],
-    sender: "Hours System",
-    createdAt: "2024-01-13T09:15:00Z",
-    read: false
-  },
-  {
-    id: 4,
-    title: "Welcome to VoluntALIA!",
-    message: "Welcome to our volunteer management system. Please complete your profile setup.",
-    type: "success",
-    recipient: "specific",
-    recipientUsers: ["New Volunteer"],
-    sender: "System",
-    createdAt: "2024-01-12T14:20:00Z",
-    read: true
-  }
-];
-
-// Mock users for recipient selection
-const mockUsers = [
-  { id: 1, name: "John Doe", email: "john@example.com" },
-  { id: 2, name: "Jane Smith", email: "jane@example.com" },
-  { id: 3, name: "Maria Garcia", email: "maria@example.com" },
-  { id: 4, name: "David Johnson", email: "david@example.com" }
-];
+import { Bell, Plus, Users, Send, User, X } from "lucide-react";
+import { useUsers } from "@/hooks/user/useUsers";
+import { useNotifications } from "@/hooks/notification/useNotifications";
+import { useSendNotification } from "@/hooks/notification/useSendNotification";
+import { useMarkNotificationRead } from "@/hooks/notification/useMarkNotificationRead";
 
 const Notifications = () => {
+  const { data: notifications = [], isLoading } = useNotifications();
+  const { data: users = [] } = useUsers();
+  const sendNotification = useSendNotification();
+  const markAsRead = useMarkNotificationRead();
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState(mockNotifications);
+
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newNotification, setNewNotification] = useState({
-    title: "",
     message: "",
-    type: "info" as "info" | "warning" | "success" | "event",
     recipient: "everyone" as "everyone" | "specific",
-    selectedUsers: [] as number[]
+    selectedUsers: [] as string[],
   });
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "warning": return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-      case "success": return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "event": return <Calendar className="h-4 w-4 text-blue-600" />;
-      default: return <Info className="h-4 w-4 text-blue-600" />;
-    }
+  // Filtrar usuarios basado en la búsqueda y excluir los ya seleccionados
+  const filteredUsers = useMemo(() => {
+    if (!userSearchQuery.trim()) return [];
+    return users.filter(
+      (user) =>
+        user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) &&
+        !newNotification.selectedUsers.includes(user.id)
+    );
+  }, [userSearchQuery, users, newNotification.selectedUsers]);
+
+  const selectedUserObjects = useMemo(() => {
+    return users.filter((user) => newNotification.selectedUsers.includes(user.id));
+  }, [users, newNotification.selectedUsers]);
+
+  const handleSelectUser = (userId: string) => {
+    setNewNotification((prev) => ({
+      ...prev,
+      selectedUsers: [...prev.selectedUsers, userId],
+    }));
+    setUserSearchQuery("");
+    setShowUserDropdown(false);
   };
 
-  const getNotificationBadge = (type: string) => {
-    switch (type) {
-      case "warning": return <Badge variant="destructive">Warning</Badge>;
-      case "success": return <Badge variant="default" className="bg-green-600">Success</Badge>;
-      case "event": return <Badge variant="secondary">Event</Badge>;
-      default: return <Badge variant="outline">Info</Badge>;
-    }
+  const handleRemoveUser = (userId: string) => {
+    setNewNotification((prev) => ({
+      ...prev,
+      selectedUsers: prev.selectedUsers.filter((id) => id !== userId),
+    }));
+  };
+
+  const closeModal = () => {
+    setIsCreateDialogOpen(false);
+    setNewNotification({ message: "", recipient: "everyone", selectedUsers: [] });
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString() + " " + new Date(dateString).toLocaleTimeString();
   };
 
-  const handleCreateNotification = () => {
-    if (!newNotification.title || !newNotification.message) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
+  const handleCreateNotification = async () => {
+    if (!newNotification.message.trim()) {
+      toast({ title: "Error", description: "Please write a message.", variant: "destructive" });
       return;
     }
 
     if (newNotification.recipient === "specific" && newNotification.selectedUsers.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please select at least one recipient.",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Please select at least one recipient.", variant: "destructive" });
       return;
     }
 
-    const notification = {
-      id: Date.now(),
-      ...newNotification,
-      sender: "Current User", // In real app, this would be the authenticated user
-      createdAt: new Date().toISOString(),
-      read: false,
-      recipientUsers: newNotification.recipient === "specific" 
-        ? newNotification.selectedUsers.map(id => mockUsers.find(u => u.id === id)?.name || "")
-        : undefined
-    };
+    try {
+      if (newNotification.recipient === "everyone") {
+        await sendNotification.mutateAsync({ message: newNotification.message });
+      } else {
+        // El backend solo admite un destinatario por envío, así que se manda una petición por usuario seleccionado.
+        await Promise.all(
+          newNotification.selectedUsers.map((receiverId) =>
+            sendNotification.mutateAsync({ message: newNotification.message, receiverId })
+          )
+        );
+      }
 
-    setNotifications(prev => [notification, ...prev]);
-    setNewNotification({
-      title: "",
-      message: "",
-      type: "info",
-      recipient: "everyone",
-      selectedUsers: []
-    });
-    setIsCreateDialogOpen(false);
-
-    toast({
-      title: "Success",
-      description: "Notification sent successfully!",
-    });
+      toast({ title: "Success", description: "Notification sent successfully!" });
+      closeModal();
+    } catch {
+      toast({ title: "Error", description: "Failed to send notification.", variant: "destructive" });
+    }
   };
 
-  const markAsRead = (id: number) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const generalNotifications = notifications.filter(n => n.recipient === "everyone");
-  const personalNotifications = notifications.filter(n => n.recipient === "specific");
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -171,7 +114,7 @@ const Notifications = () => {
               Manage and view all notifications ({unreadCount} unread)
             </p>
           </div>
-          
+
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="shadow-soft">
@@ -186,106 +129,115 @@ const Notifications = () => {
                   Send a notification to users in the system.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    value={newNotification.title}
-                    onChange={(e) => setNewNotification(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Enter notification title"
-                  />
-                </div>
-                
                 <div className="space-y-2">
                   <Label htmlFor="message">Message *</Label>
                   <Textarea
                     id="message"
                     value={newNotification.message}
-                    onChange={(e) => setNewNotification(prev => ({ ...prev, message: e.target.value }))}
+                    onChange={(e) => setNewNotification((prev) => ({ ...prev, message: e.target.value }))}
                     placeholder="Enter notification message"
                     rows={3}
                   />
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="type">Type</Label>
-                  <Select 
-                    value={newNotification.type} 
-                    onValueChange={(value) => setNewNotification(prev => ({ ...prev, type: value as any }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="info">Info</SelectItem>
-                      <SelectItem value="warning">Warning</SelectItem>
-                      <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="event">Event</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="recipient">Recipients</Label>
-                  <Select 
-                    value={newNotification.recipient} 
-                    onValueChange={(value) => setNewNotification(prev => ({ 
-                      ...prev, 
-                      recipient: value as any,
-                      selectedUsers: value === "everyone" ? [] : prev.selectedUsers
-                    }))}
+                  <Select
+                    value={newNotification.recipient}
+                    onValueChange={(value) =>
+                      setNewNotification((prev) => ({
+                        ...prev,
+                        recipient: value as "everyone" | "specific",
+                        selectedUsers: value === "everyone" ? [] : prev.selectedUsers,
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="everyone">Everyone</SelectItem>
+                      <SelectItem value="everyone">All volunteers</SelectItem>
                       <SelectItem value="specific">Specific Users</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 {newNotification.recipient === "specific" && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <Label>Select Users</Label>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                      {mockUsers.map(user => (
-                        <div key={user.id} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={`user-${user.id}`}
-                            checked={newNotification.selectedUsers.includes(user.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setNewNotification(prev => ({
-                                  ...prev,
-                                  selectedUsers: [...prev.selectedUsers, user.id]
-                                }));
-                              } else {
-                                setNewNotification(prev => ({
-                                  ...prev,
-                                  selectedUsers: prev.selectedUsers.filter(id => id !== user.id)
-                                }));
-                              }
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <label htmlFor={`user-${user.id}`} className="text-sm">
-                            {user.name}
-                          </label>
+
+                    <div className="relative">
+                      <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                        <User className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
+                        <Input
+                          placeholder="Search users by name..."
+                          value={userSearchQuery}
+                          onChange={(e) => {
+                            setUserSearchQuery(e.target.value);
+                            setShowUserDropdown(true);
+                          }}
+                          onFocus={() => setShowUserDropdown(true)}
+                          className="border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                      </div>
+
+                      {showUserDropdown && filteredUsers.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
+                          {filteredUsers.map((user) => (
+                            <button
+                              key={user.id}
+                              type="button"
+                              onClick={() => handleSelectUser(user.id)}
+                              className="w-full px-3 py-2 text-left hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
+                            >
+                              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium">
+                                {user.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-sm">{user.name}</span>
+                            </button>
+                          ))}
                         </div>
-                      ))}
+                      )}
+
+                      {showUserDropdown && userSearchQuery && filteredUsers.length === 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
+                          No users found
+                        </div>
+                      )}
                     </div>
+
+                    {selectedUserObjects.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedUserObjects.map((user) => (
+                          <Badge key={user.id} variant="secondary" className="flex items-center gap-1 px-2 py-1">
+                            <span>{user.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveUser(user.id)}
+                              className="ml-1 hover:bg-muted rounded-full p-0.5 transition-colors"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {selectedUserObjects.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Select at least one user to continue
+                      </p>
+                    )}
                   </div>
                 )}
-                
+
                 <div className="flex justify-end space-x-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  <Button variant="outline" onClick={closeModal}>
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateNotification}>
+                  <Button onClick={handleCreateNotification} disabled={sendNotification.isPending}>
                     <Send className="h-4 w-4 mr-2" />
                     Send Notification
                   </Button>
@@ -295,139 +247,53 @@ const Notifications = () => {
           </Dialog>
         </div>
 
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all">All Notifications</TabsTrigger>
-            <TabsTrigger value="general">
-              <Globe className="h-4 w-4 mr-2" />
-              General ({generalNotifications.length})
-            </TabsTrigger>
-            <TabsTrigger value="personal">
-              <Users className="h-4 w-4 mr-2" />
-              Personal ({personalNotifications.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="space-y-4">
-            {notifications.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-8">
-                    <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No notifications yet</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              notifications.map((notification) => (
-                <Card key={notification.id} className={`cursor-pointer transition-all ${!notification.read ? "border-primary/50 bg-primary/5" : ""}`}>
-                  <CardHeader onClick={() => markAsRead(notification.id)}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3">
-                        {getNotificationIcon(notification.type)}
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <CardTitle className="text-base">{notification.title}</CardTitle>
-                            {!notification.read && <div className="w-2 h-2 bg-primary rounded-full" />}
-                          </div>
+        <div className="space-y-4">
+          {isLoading ? (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground py-8">Cargando notificaciones...</p>
+              </CardContent>
+            </Card>
+          ) : notifications.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No notifications yet</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            notifications.map((notification) => (
+              <Card
+                key={notification.id}
+                className={`cursor-pointer transition-all ${!notification.isRead ? "border-primary/50 bg-primary/5" : ""}`}
+              >
+                <CardHeader onClick={() => !notification.isRead && markAsRead.mutate(notification.id)}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      <Bell className="h-4 w-4 text-blue-600 mt-1" />
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          {!notification.isRead && <div className="w-2 h-2 bg-primary rounded-full" />}
                           <CardDescription>{notification.message}</CardDescription>
-                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                            <span>From: {notification.sender}</span>
-                            <span>•</span>
-                            <span>{formatDate(notification.createdAt)}</span>
-                            <span>•</span>
-                            <div className="flex items-center space-x-1">
-                              {notification.recipient === "everyone" ? (
-                                <>
-                                  <Globe className="h-3 w-3" />
-                                  <span>Everyone</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Users className="h-3 w-3" />
-                                  <span>Specific users</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {getNotificationBadge(notification.type)}
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="general" className="space-y-4">
-            {generalNotifications.map((notification) => (
-              <Card key={notification.id} className={`cursor-pointer transition-all ${!notification.read ? "border-primary/50 bg-primary/5" : ""}`}>
-                <CardHeader onClick={() => markAsRead(notification.id)}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3">
-                      {getNotificationIcon(notification.type)}
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <CardTitle className="text-base">{notification.title}</CardTitle>
-                          {!notification.read && <div className="w-2 h-2 bg-primary rounded-full" />}
-                        </div>
-                        <CardDescription>{notification.message}</CardDescription>
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <span>From: {notification.sender}</span>
+                          <span className="flex items-center space-x-1">
+                            <Users className="h-3 w-3" />
+                            <span>From: {notification.senderName}</span>
+                          </span>
                           <span>•</span>
                           <span>{formatDate(notification.createdAt)}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {getNotificationBadge(notification.type)}
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                    </div>
                   </div>
                 </CardHeader>
               </Card>
-            ))}
-          </TabsContent>
-
-          <TabsContent value="personal" className="space-y-4">
-            {personalNotifications.map((notification) => (
-              <Card key={notification.id} className={`cursor-pointer transition-all ${!notification.read ? "border-primary/50 bg-primary/5" : ""}`}>
-                <CardHeader onClick={() => markAsRead(notification.id)}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-3">
-                      {getNotificationIcon(notification.type)}
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <CardTitle className="text-base">{notification.title}</CardTitle>
-                          {!notification.read && <div className="w-2 h-2 bg-primary rounded-full" />}
-                        </div>
-                        <CardDescription>{notification.message}</CardDescription>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <span>From: {notification.sender}</span>
-                          <span>•</span>
-                          <span>{formatDate(notification.createdAt)}</span>
-                          {notification.recipientUsers && (
-                            <>
-                              <span>•</span>
-                              <span>To: {notification.recipientUsers.join(", ")}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {getNotificationBadge(notification.type)}
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </TabsContent>
-        </Tabs>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

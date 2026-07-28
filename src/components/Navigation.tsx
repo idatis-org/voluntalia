@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Heart, Users, Clock, FileText, Menu, LogOut, Bell, Activity } from "lucide-react";
+import { Heart, Users, Clock, FileText, Menu, LogOut, Bell, Activity, Settings } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
@@ -20,11 +20,10 @@ export const Navigation = () => {
     { name: "Dashboard", href: "/", icon: Heart, roles: ROUTE_PERMISSIONS.DASHBOARD },
     { name: "Volunteers", href: "/volunteers", icon: Users, roles: ROUTE_PERMISSIONS.VOLUNTEERS },
     { name: "Activities", href: "/activities", icon: Activity, roles: ROUTE_PERMISSIONS.ACTIVITIES },
-    // { name: "Events", href: "/events", icon: Calendar, roles: [] },
     { name: "Hours", href: "/hours", icon: Clock, roles: ROUTE_PERMISSIONS.HOURS },
     { name: "Resources", href: "/resources", icon: FileText, roles: ROUTE_PERMISSIONS.RESOURCES },
     { name: "Notifications", href: "/notifications", icon: Bell, roles: ROUTE_PERMISSIONS.NOTIFICATIONS },
-    // { name: "Settings", href: "/settings", icon: Settings, roles: ROUTE_PERMISSIONS.SETTINGS },
+    { name: "Settings", href: "/settings", icon: Settings, roles: ROUTE_PERMISSIONS.SETTINGS },
   ], []);
 
   const allowedNavItems = useMemo(() => navItems.filter(item => 

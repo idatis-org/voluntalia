@@ -1,0 +1,11 @@
+services:
+  frontend:
+    build: .
+    ports:
+      - "8081:80"
+    networks:
+      - voluntalia_net
+
+networks:
+  voluntalia_net:
+    external: true

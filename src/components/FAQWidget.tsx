@@ -9,9 +9,9 @@ const FAQWidget = () => {
 
   const faqs = [
     {
-      id: "events",
-      question: "How do I create a new event?",
-      answer: "Navigate to the Events page from the main menu, then click the 'Create Event' button. Fill in the event details including name, date, location, and description. Click 'Create Event' to save."
+      id: "activities",
+      question: "How do I create a new activity?",
+      answer: "Navigate to the Activities page from the main menu, then click the 'Create Activity' button. Fill in the activity details including title, date, location, and description, then assign volunteers."
     },
     {
       id: "volunteers",

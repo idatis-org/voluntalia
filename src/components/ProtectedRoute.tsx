@@ -1,13 +1,14 @@
 // components/ProtectedRoute.tsx
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { hasAnyRole } from '@/lib/permissions';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: readonly string[];
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   allowedRoles = []  }) => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -21,12 +22,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Verificar si el usuario tiene al menos uno de los roles permitidos
-  if (allowedRoles.length > 0 && user?.role) {
-    const hasPermission = allowedRoles.some(role => user.role.includes(role));
-    if (!hasPermission) {
-      // Redirigir a una página de acceso denegado o al dashboard
-      return <Navigate to="/unauthorized" replace />;
-    }
+  if (allowedRoles.length > 0 && !hasAnyRole(user, allowedRoles)) {
+    // Redirigir a una página de acceso denegado
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <>{children}</>;

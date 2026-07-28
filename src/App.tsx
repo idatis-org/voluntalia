@@ -8,11 +8,11 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Volunteers from './pages/Volunteers';
 import Activities from './pages/Activities';
-import Events from './pages/Events';
 import Hours from './pages/Hours';
 import Resources from './pages/Resources';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
+import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
 import ResetPassword from './pages/ResetPassword';
 import { AuthProvider } from './contexts/AuthContext';
@@ -43,6 +43,7 @@ const App = () => (
                       <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/unauthorized" element={<Unauthorized />} />
                         {/* Rutas protegidas por rol */}
                         <Route
                           path="/volunteers"
